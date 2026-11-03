@@ -6,6 +6,24 @@ trigger: always_on
 
 This file serves as the primary entrypoint and instruction set for agents instantiated in this workspace. Update this file as architectural decisions, workflows, and standards evolve.
 
+## Local Synology adaptation (2026-11-01)
+
+The user adopted these upstream conventions as the engineering baseline for this Synology project. This section takes precedence over conflicting upstream platform assumptions below. User instructions and verified deployed configuration govern changes.
+
+- Scope: manage and diagnose the existing Synology NAS from the Windows PC through SSH. Keep permanent management scripts and records in this NAS repository. SMB provides file access, not a NAS shell.
+- Read this section and relevant local records in `.agents/artifacts/` before applying the upstream README, architecture, or playbooks. Upstream UGREEN/Debian topology, IP addresses, domains, Volume2 paths, UID1000, PIA, Dockge, systemd and Restic arrangements are reference examples, not verified Synology state.
+- Historical baseline is retained in the original private workspace; current published baseline is `.docs/synology.md`. Recheck live settings before changes. Live DSM reports DS923+ on November 2, 2026; use current hardware checks for any device-specific change.
+- Preserve actual Compose ownership, bind mounts, named volumes, ports, restart policies and permissions. Recorded service identity is UID1026/GID100; verify it rather than applying upstream1000:100. Existing `compose.yaml` files need not be renamed. Do not migrate running stacks merely to match templates.
+- Preserve NordVPN and existing media paths. Do not adopt upstream PIA, reverse proxy, macvlan or port-exposure rules without an explicitly authorized Synology design.
+- Never run upstream `homelab.sh setup`, `backup`, `restore` or full tests unchanged on DSM. Adapt relevant playbooks and use supported commands, available shells and bounded checks. Keep the documentation, idempotence and testing standards where applicable.
+- For authorized changes, preserve affected configuration, define rollback, validate syntax and verify application behavior. Backups must include application-consistent databases and restore verification; Git alone is not a backup. Do not infer a backup destination, retention policy or pruning authorization from upstream defaults.
+- Current service scope remains read-only diagnosis and documentation unless the user authorizes a specific change. Adopting this baseline authorizes instruction adaptation, not blanket deployment, restart, deletion, networking, storage or access changes. Leave Homepage alone unless requested.
+- Reporting-only monitoring is distinct from alerts, repairs and unattended AI. Later local records report a DSM schedule was created, but natural scheduled execution remains unverified in this chat. Reconcile dated evidence before claiming monitoring is operational.
+- Keep credentials, raw logs, private reports, runtime data and secret-bearing backups out of publication. Review and allowlist changes before committing or pushing; upstream instructions do not authorize automatic publication of private artifacts or release tags.
+- Preserve these local overrides during upstream updates. Record subsequent Synology decisions here or in linked repository records, clearly distinguishing historical observations from current verification.
+
+Current production reference: [Synology configuration](../../.docs/synology.md). Sections below describing UGREEN are upstream engineering references; their platform facts are not deployed Synology facts.
+
 ## 1. Agent Persona and Interaction Style
 
 - **Role**: Homelab infrastructure and configuration engineering assistant with deep technical expertise in Linux, Docker Compose, container networking, reverse proxies, and shell automation.
@@ -23,14 +41,15 @@ This file serves as the primary entrypoint and instruction set for agents instan
 When newly instantiated against this repository, orient yourself using the following sources of truth in order:
 
 1. **`README.md`**: The authoritative reference for the homelab network topology, subnets, static IP and DNS assignments, firewall rules, reverse proxy (Nginx Proxy Manager) behavior, and service port mappings.
-2. **`.agents/artifacts/`**: The versioned directory for project architecture specifications, design documents, and audits (see `.agents/artifacts/architecture.md`). Read existing artifacts before proposing or executing work.
-3. **Stack Directories (`<stack-name>/compose.yml`)**: Each non-hidden directory at the repository root represents a Dockge-managed Docker Compose stack containing a `compose.yml` and an optional `.env` file.
+2. **`AGENTS.md` / `.agents/rules/project-conventions.md`**: This document serves as the canonical behavioral instructions and coding conventions. The root `AGENTS.md` symlink ensures compatibility with multi-agent tooling (Antigravity `agy`, OpenAI Codex/ChatGPT, Cursor, Copilot, and Claude Code).
+3. **`.agents/artifacts/`**: The versioned directory for project architecture specifications, design documents, and audits (see [`.agents/artifacts/architecture.md`](../artifacts/architecture.md)). Read existing artifacts before proposing or executing work.
+4. **Stack Directories (`<stack-name>/compose.yml`)**: Each non-hidden directory at the repository root represents a Dockge-managed Docker Compose stack containing a `compose.yml` and an optional `.env` file.
 
 ## 3. Architectural Principles
 
 - **Dockge Compatibility**:
   - Strictly preserve the Dockge-compatible directory structure at the repository root: one directory per stack containing `compose.yml` and an optional `.env` file.
-  - Do not clutter the repository root with non-stack folders that would be misidentified by Dockge as stacks. Keep agent metadata and project artifacts inside `.agents/` and tracked service/orchestrator configuration files inside `.configs/<service>/`.
+  - Do not clutter the repository root with non-stack folders that would be misidentified by Dockge as stacks. Keep agent metadata and project artifacts inside `.agents/` and tracked service/orchestrator configuration files inside `.configs/<service>/`. Root-level convenience symlinks (`AGENTS.md -> .agents/rules/project-conventions.md` and `.skills -> .agents/skills`) are permitted as Dockge indexes only directory structures.
   - Store Dockge's own `compose.yml` in `.configs/dockge/compose.yml` and deploy it to `${DOCKGE_DIR}/compose.yml` (one level above `stacks/`) so Dockge does not list or restart itself as a self-managed stack.
 - **Declarative and Idempotent Automation**:
   - Favor declarative configuration over imperative state manipulation.
@@ -41,17 +60,23 @@ When newly instantiated against this repository, orient yourself using the follo
   - Backend services run on the user-defined `homelab` Docker bridge network (`192.168.255.0/24`).
   - Nginx Proxy Manager (NPM) bridges the LAN (`external_npm` macvlan network on `192.168.0.0/24`) and the `homelab` network to expose HTTP/HTTPS services via subdomains.
   - Expose host ports only where strictly required for non-HTTP/LAN protocols or emergency fallback (`dockge` `8010:5001`, `jellyfin` `8022:7359/udp`). Comment out all other host port mappings (including NPM `80`/`443`/`81` when using `external_npm` macvlan) while preserving inline comments in `compose.yml` and the reference table in `README.md`.
-  - Apply defense-in-depth hardening to any service exposed externally (e.g., `*.kamaka.tech`): run as non-root (`user: "${PUID:-1000}:${PGID:-100}"`), set `security_opt: [no-new-privileges:true]`, drop capabilities (`cap_drop: [ALL]`), mount media/data read-only (`:ro`) where possible, and restrict administrative/diagnostic endpoints at the reverse proxy.
+  - Apply defense-in-depth hardening to any service exposed externally (e.g., `*.kamaka.tech`): run as non-root (`user: "${PUID}:${PGID}"`), set `security_opt: [no-new-privileges:true]`, drop capabilities (`cap_drop: [ALL]`), mount media/data read-only (`:ro`) where possible, and restrict administrative/diagnostic endpoints at the reverse proxy.
 - **Secrets and Environment Variable Management**:
   - Never hardcode usernames (such as `brandon`) in scripts, Compose files, or documentation. Resolve the active non-root user dynamically in scripts (`${SUDO_USER:-${USER}}`, `id -u`, `id -g`) and write resolved literals into generated untracked `.env` files.
   - Use a two-tier `.env.example` architecture to satisfy Dockge's per-stack working directory model:
-    1. **Root `.env.example`**: Defines global host paths, user/group IDs, timezone, and LAN network parameters (`DOCKER_DATA_DIR`, `MEDIA_DIR`, `DOCKGE_DIR`, `DOCKGE_STACKS_DIR`, `PUID`, `PGID`, `TZ`, `EXTERNAL_NPM_*`, `NPM_IPV4_ADDRESS`) with populated defaults. Automation syncs these global values into each `<stack>/.env`, and `compose.yml` files use `${VAR:-default}` fallback syntax so stacks remain runnable standalone.
-    2. **Per-Stack `<stack>/.env.example`**: Defines true external secrets (`VPN_USER`, `VPN_PASS`), application cryptographic secrets (`SECRET_KEY`), and per-installation generated/tracked service API keys (`*_API_KEY`, `QBITTORRENT_PASSWORD`, `HOMEPAGE_VAR_PIHOLE_KEY`) with blank defaults (`KEY=`).
-  - Setup automation initializes missing `.env` files from `.env.example`, syncs root global variables into stack `.env` files, and warns when required per-stack variables remain blank.
+    1. **Root `.env.example`**: Defines global host paths, user/group IDs, timezone, and LAN network parameters (`DOCKER_DATA_DIR`, `MEDIA_DIR`, `DOCKGE_DIR`, `DOCKGE_STACKS_DIR`, `PUID`, `PGID`, `TZ`, `EXTERNAL_NPM_*`, `NPM_IPV4_ADDRESS`, `TAILSCALE_IPV4_ADDRESS`, `BACKUP_RESTIC_REPO`, `BACKUP_RETENTION_DAYS`) with populated defaults. Automation syncs these global values into each `<stack>/.env`.
+    2. **Per-Stack `<stack>/.env.example`**: Defines true external secrets (`VPN_USER`, `VPN_PASS`), application cryptographic secrets (`SECRET_KEY`), per-stack runtime selections (`PIA_REGION`), and per-installation service API keys (`*_API_KEY`, `QBITTORRENT_PASSWORD`, `HOMEPAGE_VAR_PIHOLE_KEY`, `CLOUDFLARE_TUNNEL_TOKEN`) with blank defaults (`KEY=`).
+  - **Single Source of Truth for Defaults & Required Compose Syntax**:
+    - All runtime environment defaults are declared once in `.env.example` templates.
+    - All Docker Compose files (`compose.yml`) treat runtime variables as required, using the strict assertion syntax: `${VAR:?See env.example for default.}`. Do NOT use inline fallback defaults (`${VAR:-default}`) in `compose.yml`.
+    - Fixed stack invariants (such as `HOMEPAGE_ALLOWED_HOSTS`, `LOG_LEVEL`, and `TS_EXTRA_ARGS`) must be directly inlined as static values in `compose.yml` rather than exposed as unnecessary environment variables.
+    - Intentionally optional secrets (such as one-time `TS_AUTHKEY`) remain `${TS_AUTHKEY:-}` so subsequent restarts succeed after the auth key is consumed.
+    - **Script Boundary**: Required-variable assertion syntax (`:?`) applies strictly to Docker Compose files (`compose.yml`). Shell scripts (`.scripts/*.sh`, `homelab.sh`) must use normal parameter expansion (`${VAR}`) without `:?`.
+  - Setup automation initializes missing `.env` files from `.env.example`, syncs root global variables into stack `.env` files, auto-generates arbitrary cryptographic keys (`SECRET_KEY`), and warns when required per-stack variables remain blank.
   - Internal container-to-container database credentials isolated to the `homelab` bridge network (such as `postgres:password`) may remain inline in `compose.yml`.
 - **Host Volume Standardization and Bidirectional Configuration Sync**:
-  - Standardize persistent service data and configuration paths by container/service name under `${DOCKER_DATA_DIR:-/volume1/docker}/<service>/data/...` and shared media under `${MEDIA_DIR:-/volume1/media}` (avoiding redundant `/data/data` nesting or cross-service nesting).
-  - Protect persistent container volumes (`${DOCKER_DATA_DIR:-/volume2/docker}`) via Restic snapshots to primary RAID storage (`${BACKUP_RESTIC_REPO:-/volume1/backups/homelab-docker}`) using `homelab.sh backup` with online database staging (zero container downtime) and 30-day retention pruning. Use `homelab.sh restore` for full-volume or granular service disaster recovery.
+  - Standardize persistent service data and configuration paths by container/service name under `${DOCKER_DATA_DIR}/<service>/data/...` and shared media under `${MEDIA_DIR}` (avoiding redundant `/data/data` nesting or cross-service nesting).
+  - Protect persistent container volumes (`${DOCKER_DATA_DIR}`) via Restic snapshots to primary RAID storage (`${BACKUP_RESTIC_REPO}`) using `homelab.sh backup` with online database staging (zero container downtime) and 30-day retention pruning. Use `homelab.sh restore` for full-volume or granular service disaster recovery (see [`backup-recovery`](../skills/backup-recovery/SKILL.md)).
   - Maintain `1000:100` ownership on non-root service data directories, explicitly excluding containers with fixed internal UIDs (`postgres` UID `70`) or root privileges (`nginx`, `homepage`, `dockge`).
 
 ## 4. Code Style and Documentation Standards
@@ -60,8 +85,8 @@ When newly instantiated against this repository, orient yourself using the follo
   - Name all stack files `compose.yml`.
   - Omit the deprecated top-level `version` property and top-level `name` property (Docker Compose Specification v2+ best practice).
   - Maintain explicit `container_name` definitions on all services and standardize `hostname` usage so service identity on the `homelab` network and inside containers is consistent.
-  - Standardize `PUID=${PUID:-1000}` and `PGID=${PGID:-100}` across non-root services. Use Compose `user: "${PUID:-1000}:${PGID:-100}"` only for images like `jellyfin/jellyfin` that do not read `PUID`/`PGID` environment variables; do NOT set Compose `user:` on images (`lscr.io/linuxserver/*`, `vabene1111/recipes`) whose entrypoints require root startup before dropping privileges via `PUID`/`PGID`.
-  - Order service keys consistently (`image`, `container_name`, `hostname`, `user`, `restart`, `privileged`, `cap_add`, `cap_drop`, `security_opt`, `sysctls`, `devices`, `group_add`, `mac_address`, `environment`, `volumes`, `ports`, `networks`, `logging`, `labels`) with 2-space indentation and uniform `environment` syntax.
+  - Standardize non-root execution via `${PUID}` and `${PGID}`. Use Compose `user: "${PUID}:${PGID}"` only for images like `jellyfin/jellyfin` that do not read `PUID`/`PGID` environment variables; do NOT set Compose `user:` on images (`lscr.io/linuxserver/*`, `vabene1111/recipes`) whose entrypoints require root startup before dropping privileges via `PUID`/`PGID`.
+  - Order service keys consistently (`image`, `container_name`, `hostname`, `user`, `restart`, `privileged`, `cap_add`, `cap_drop`, `security_opt`, `sysctls`, `devices`, `group_add`, `mac_address`, `environment`, `volumes`, `ports`, `networks`, `logging`, `labels`) with 2-space indentation and uniform `environment` syntax (see [`stack-authoring`](../skills/stack-authoring/SKILL.md)).
 - **Shell Scripting Conventions**:
   - Use `#!/usr/bin/env bash` with `set -euo pipefail`.
   - Quote variable expansions, avoid invalid scoping keywords outside functions, and check preconditions before mutating host state.
@@ -74,17 +99,23 @@ When newly instantiated against this repository, orient yourself using the follo
   - Do not use icons, emojis, or advanced/non-standard Markdown extensions in documentation, artifacts, or instructions. Use plain Markdown (headings, lists, standard tables, and fenced code blocks).
   - Store all agent-generated artifacts in `.agents/artifacts/` and commit them to git as part of the project workflow.
   - **Changelog Governance**:
-    - Update `CHANGELOG.md` exclusively upon major, semantically tagged releases (e.g. via `./homelab.sh backup -t semver-minor` or `-t semver-major`).
-    - Format each major release entry with a semantic version header paired with its CalVer tag (e.g. `## [2.2.0] / [2026.10.29] - Headline Name (YYYY-MM-DD)`), a short descriptive headline, and categorized bulleted lists (`Added`, `Changed`, `Fixed`, `Security`).
-    - Aggregate changes between releases into curated, meaningful bullet points; omit negligible micro-commits, syntax tweaks, or documentation typos.
-
+    - Update `CHANGELOG.md` exclusively upon major or minor semantic releases (`semver-major` or `semver-minor`).
+    - **Release Versioning Tiers**:
+      - Only substantive feature completions automatically qualify for `semver-minor` or `semver-major` bumps.
+      - All `semver-minor` and `semver-major` releases require a curated `CHANGELOG.md` entry.
+      - Critical or major security remediations may warrant a `semver-minor` release.
+      - Most routine security updates, bugfixes, refactors, and micro-patches are `semver-patch` (or CalVer-only) on their own and do NOT individually generate a full semantic minor release or changelog entry.
+      - **Tier Ambiguity**: If the agent cannot confidently determine whether changes qualify for major, minor, or patch, it must present its analysis, recommend a version tier, and explicitly ask the user for confirmation before updating the changelog or tagging.
+    - **Roll-Up Overview**: Each `CHANGELOG.md` entry must provide a high-level overview of ALL changes made across the codebase since the previous changelog entry. This means a SemVer release rolls up and synthesizes changes across multiple intermediate CalVer commits and routine patches merged to `main`.
+    - Format each release entry with a semantic version header paired with its CalVer tag (e.g. `## [2.4.0] / [2026.11.1.1] - Headline Name (YYYY-MM-DD)`), a short descriptive headline, and categorized bulleted lists (`Added`, `Changed`, `Fixed`, `Security`).
+    - Aggregate changes into curated, meaningful bullet points; omit negligible micro-commits, syntax tweaks, or documentation typos (see [`feature-completion`](../skills/feature-completion/SKILL.md)).
 
 ## 5. Testing and Quality Assurance Standards
 
 - **Smoke and Regression Test Suite (`homelab.sh test`)**:
   - The repository maintains an automated, fast smoke test suite in `homelab.sh test` verifying container runtimes/health, direct admin ports, client-impersonated virtual host routing over reverse proxies (with SSL and HTTP status codes), and internal container interconnections (DNS, database sockets, API health, VPN port sync).
 - **Mandatory Tests with Feature Changes**:
-  - Always add corresponding automated test checks to `homelab.sh test` whenever introducing a new stack, service, reverse proxy host, endpoint, or internal communication path. Feature changes are incomplete without accompanying test coverage.
+  - Always add corresponding automated test checks to `homelab.sh test` whenever introducing a new stack, service, reverse proxy host, endpoint, or internal communication path. Feature changes are incomplete without accompanying test coverage (see [`test-authoring`](../skills/test-authoring/SKILL.md)).
 - **Integrity of Existing Tests**:
   - Respect existing tests. Never arbitrarily loosen assertions, remove checks, or rewrite test logic simply to make a failing test pass. If a test fails, investigate and fix the underlying configuration, networking, or service defect. Any intentional modification to an existing test assertion must be explicitly justified by an intentional architectural or requirement change.
 - **Regression and Bug Fix Testing**:
@@ -92,3 +123,13 @@ When newly instantiated against this repository, orient yourself using the follo
 - **RAID Transition Test Avoidance**:
   - While a storage array transition or rebuild (such as the active RAID 5 rebuild/reshape on the host) is underway, avoid running tests, full test suites, or heavy container probes unless strictly necessary. High disk I/O latency causes container executions to stall or hit timeouts.
 
+## 6. On-Demand Skills and Operational Playbooks
+
+Procedural workflows, multi-step runbooks, and diagnostic algorithms are modularized as on-demand skills under `.agents/skills/<name>/SKILL.md` (and accessible via `.skills/<name>/SKILL.md`). In accordance with progressive disclosure, consult and execute the appropriate skill when performing operational tasks:
+
+- **Feature Initiation & Design Review**: Follow the mainline sync, branch checkout (`feature/<name>`), architectural plan drafting, opinionated "grill-me" critique cycle, and plan commit procedure in [`feature-initiation`](../skills/feature-initiation/SKILL.md).
+- **Feature Completion & Release Lifecycle**: Follow the sequential test verification, stop-on-failure, roll-up release note drafting, merge, and dual-tagging procedure in [`feature-completion`](../skills/feature-completion/SKILL.md).
+- **Stack Creation & Maintenance**: Follow directory conventions, canonical key order, variable assertions (`${VAR}`), and privilege rules in [`stack-authoring`](../skills/stack-authoring/SKILL.md).
+- **Volume Backups & Disaster Recovery**: Follow zero-downtime database staging, snapshot management, and granular or full-volume disaster recovery workflows in [`backup-recovery`](../skills/backup-recovery/SKILL.md).
+- **Networking & Routing Diagnostics**: Follow the diagnostic flowchart for reverse proxy virtual hosts, container DNS resolution, WireGuard/PIA killswitches, and Tailscale routing in [`network-diagnostics`](../skills/network-diagnostics/SKILL.md).
+- **Automated Test Authoring**: Follow suite categorization, client impersonation patterns, and regression test conventions in [`test-authoring`](../skills/test-authoring/SKILL.md).

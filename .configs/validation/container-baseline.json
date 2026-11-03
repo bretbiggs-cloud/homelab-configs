@@ -1,0 +1,42 @@
+[
+  {
+    "Name": "/qbittorrent",
+    "Id": "855da53f2c6d5769c8eb1056bd3b2e3781300160e05f8ae418dc8c5fa193777d",
+    "StartedAt": "2026-11-02T04:36:04.49451869Z"
+  },
+  {
+    "Name": "/prowlarr",
+    "Id": "2a2f1797b11be609fdda681a67842a3473e2b5c5d5f6f18e110f17d2aea9e8c4",
+    "StartedAt": "2026-11-02T04:36:20.715214947Z"
+  },
+  {
+    "Name": "/sonarr",
+    "Id": "1dc9eee456d306e8cd7ec5d46b032e11cdb842160d105c2a1dd71712b5cfe27f",
+    "StartedAt": "2026-11-02T04:36:28.030036425Z"
+  },
+  {
+    "Name": "/radarr",
+    "Id": "eda92b0920606773c522a9ab33eb4caa99093330cb3414edcd5afef2e078f4c9",
+    "StartedAt": "2026-11-02T04:36:38.371757335Z"
+  },
+  {
+    "Name": "/seerr",
+    "Id": "0c7b549a471d5fe5d236625c8c1e6a1ee8907c66a83beac1c4eef223c1d3c06b",
+    "StartedAt": "2026-11-02T04:37:01.057397666Z"
+  },
+  {
+    "Name": "/homepage",
+    "Id": "2441c7db153e325986fdddc5289c25ffab18d53306c312c0150517f7a3c838d2",
+    "StartedAt": "2026-11-02T04:36:15.724355207Z"
+  },
+  {
+    "Name": "/omada-controller",
+    "Id": "73f3fe3feae784ab322a2646b99537bba942b512490d3a07d14712fed2c46c02",
+    "StartedAt": "2026-11-02T04:36:09.115861787Z"
+  },
+  {
+    "Name": "/portainer",
+    "Id": "2fe029794d9328261fa49407f2ef67761593b77ad951ad2226d1df81d241f406",
+    "StartedAt": "2026-11-02T04:31:36.948920904Z"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "seerrRequestId": 1,
+  "purpose": "Existing Creative Commons validation file; manual low-resolution import, no new acquisition",
+  "sourcePath": "/downloads/validation/Sintel/Sintel.mp4",
+  "tmdbId": 45745,
+  "radarrId": 1,
+  "importPath": "/downloads/library/movies/Sintel (2010)/Sintel.mp4",
+  "title": "Sintel",
+  "monitored": false,
+  "year": 2010,
+  "jellyfinPath": "/media/downloads-v2/library/movies/Sintel (2010)/Sintel.mp4"
+}

@@ -1,0 +1,30 @@
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr@sha256:c80ae007ce2ccdcd217a12426e4f039ef763ff90738c808d38810c3e59323767
+    container_name: homelab-v2-flaresolverr
+    hostname: homelab-v2-flaresolverr
+    restart: unless-stopped
+    # Bound browser memory on the shared Synology host; no additional swap.
+    mem_limit: 768m
+    memswap_limit: 768m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      LOG_LEVEL: info
+      LOG_HTML: "false"
+      TZ: ${TZ:?See env.example for default.}
+    networks:
+      - homelab
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    tmpfs:
+      - /tmp:size=256M,mode=1777
+networks:
+  homelab:
+    external: true
+    name: homelab-v2-jellyfin_homelab

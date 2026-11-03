@@ -1,3 +1,5 @@
+> Historical upstream UGREEN reference, not live Synology facts. See [current Synology configuration](synology.md). Do not apply its host paths, systemd services, networks or automation to DSM.
+
 # Operations and Appliance Engineering
 
 This document provides operational runbooks, automation procedures, host systemd service definitions, and appliance-level engineering documentation for the homelab environment.
@@ -19,7 +21,7 @@ Usage: homelab.sh <subcommand> [options]
 * **`startup`** (`./homelab.sh startup`):
   Non-interactive boot hook designed for systemd execution on host startup. Waits for storage volume mounts (up to 60s), ensures Docker networks exist, and launches Dockge and all stacks in strict dependency order with PostgreSQL database readiness verification.
 * **`backup`** (`sudo ./homelab.sh backup [-t <type|name>] [-m <message>]`):
-  Stages zero-downtime database dumps (`pg_dumpall` for PostgreSQL, SQLite `.backup` / WAL checkpoints for NPM/Jellyfin/Sonarr/Radarr), creates untracked `.env` secret archives, and streams incremental deduplicated snapshots of `${DOCKER_DATA_DIR}` to `${BACKUP_RESTIC_REPO:-/volume1/backups/homelab-docker}` via native Restic (`--insecure-no-password`) with 30-day retention pruning. If requested, automatically commits repository changes, applies repeatable SemVer (`semver-major`, `semver-minor`, `semver-patch`), CalVer (`YYYY.M.D[.N]`), and custom git tags, pushes commits and tags to remote `origin`, and forwards the exact same tags into Restic.
+  Stages zero-downtime database dumps (`pg_dumpall` for PostgreSQL, SQLite `.backup` / WAL checkpoints for NPM/Jellyfin/Sonarr/Radarr), creates untracked `.env` secret archives, and streams incremental deduplicated snapshots of `${DOCKER_DATA_DIR}` to `${BACKUP_RESTIC_REPO}` via native Restic (`--insecure-no-password`) with 30-day retention pruning. If requested, automatically commits repository changes, applies repeatable SemVer (`semver-major`, `semver-minor`, `semver-patch`), CalVer (`YYYY.M.D[.N]`), and custom git tags, pushes commits and tags to remote `origin`, and forwards the exact same tags into Restic.
 * **`snapshots`** (`./homelab.sh snapshots`):
   Displays all historical Restic backup snapshots, timestamps, snapshot IDs, tags, and summary metrics.
 * **`restore`** (`sudo ./homelab.sh restore [snapshot_id] [service_name] [-f]`):
@@ -86,7 +88,7 @@ systemctl list-timers homelab-backup.timer
 To restore all `.env` secret files on a freshly provisioned host:
 ```bash
 cd ~/services
-tar -xzf "${DOCKER_DATA_DIR:-/volume2/docker}/backup/homelab/latest_env_secrets.tar.gz" -C ~/services
+tar -xzf "${DOCKER_DATA_DIR}/backup/homelab/latest_env_secrets.tar.gz" -C ~/services
 sudo ./homelab.sh setup
 ```
 
@@ -121,10 +123,10 @@ Tracked unit definitions are maintained in `.configs/systemd/` and deployed to `
 
 ### 4.1 Antigravity Remote Control Daemon (`antigravity-remote-control.service`)
 * **Unit File**: `/etc/systemd/system/antigravity-remote-control.service`
-* **Tracked Template**: [.configs/systemd/antigravity-remote-control.service](file:///home/brandon/services/.configs/systemd/antigravity-remote-control.service)
+* **Tracked Template**: [.configs/systemd/antigravity-remote-control.service](../.configs/systemd/antigravity-remote-control.service)
 * **Purpose**: Keeps the Google Antigravity Remote Control daemon (`Aumaka`) persistently online across system reboots.
 * **Operational Behavior**:
-  Runs `/home/brandon/.gemini/bin/agy remote-control serve` as user `brandon`. Includes an `ExecStartPre` polling loop that waits until the binary exists on disk before attempting startup, and sets `Restart=always` with `RestartSec=5s` so the daemon recovers instantly once user files are accessible.
+  Runs `${HOME}/.gemini/bin/agy remote-control serve` as user `${USER}`. Includes an `ExecStartPre` polling loop that waits until the binary exists on disk before attempting startup, and sets `Restart=always` with `RestartSec=5s` so the daemon recovers instantly once user files are accessible.
 
 To install or reload:
 ```bash
@@ -135,10 +137,10 @@ sudo systemctl enable --now antigravity-remote-control.service
 
 ### 4.2 Homelab Startup Orchestrator (`homelab-startup.service`)
 * **Unit File**: `/etc/systemd/system/homelab-startup.service`
-* **Tracked Template**: [.configs/systemd/homelab-startup.service](file:///home/brandon/services/.configs/systemd/homelab-startup.service)
+* **Tracked Template**: [.configs/systemd/homelab-startup.service](../.configs/systemd/homelab-startup.service)
 * **Purpose**: Automatically initializes Docker networks, Dockge, and all application stacks in strict dependency order on host boot.
 * **Operational Behavior**:
-  Executes `/home/brandon/services/homelab.sh startup` after `docker.service` and `storage_serv.service` reach readiness.
+  Executes `${HOME}/services/homelab.sh startup` after `docker.service` and `storage_serv.service` reach readiness.
 
 To install or reload:
 ```bash
@@ -147,17 +149,33 @@ sudo systemctl daemon-reload
 sudo systemctl enable homelab-startup.service
 ```
 
+### 4.3 Automated Nightly Backup Units (`homelab-backup.service` & `homelab-backup.timer`)
+* **Unit Files**: `/etc/systemd/system/homelab-backup.service`, `/etc/systemd/system/homelab-backup.timer`
+* **Tracked Templates**:
+  - [.configs/systemd/homelab-backup.service](../.configs/systemd/homelab-backup.service)
+  - [.configs/systemd/homelab-backup.timer](../.configs/systemd/homelab-backup.timer)
+* **Purpose**: Orchestrates non-disruptive nightly Restic snapshots of persistent volume state to `/volume1/backups/homelab-docker` with 30-day retention pruning.
+* **Operational Behavior**:
+  The systemd timer fires at 03:00 daily, triggering `homelab-backup.service` which executes `${HOME}/services/homelab.sh backup -t calver -m "chore(backup): scheduled volume snapshot"`.
+
+To install or reload:
+```bash
+sudo cp ~/services/.configs/systemd/homelab-backup.* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now homelab-backup.timer
+```
+
 ---
 
 ## 5. Asynchronous Storage Mounts & OS Workarounds
 
 ### Asynchronous Storage Mount Handling in UGOS Pro
-On UGREEN NAS OS, user home directories (`/home/<user>`) and secondary storage pools (`/volume2`) are mounted **asynchronously** by UGREEN's internal storage daemon (`storage_serv`) well after systemd's early boot phase.
+On UGREEN NAS OS, user home directories (`${HOME}`) and secondary storage pools (`/volume2`) are mounted **asynchronously** by UGREEN's internal storage daemon (`storage_serv`) well after systemd's early boot phase.
 
 * **Why Standard User Units (`systemd --user`) Fail**:
-  When systemd launches `user@1000.service`, `/home/brandon` is not yet mounted. As a result, `systemd --user` processes an empty directory, misses user unit files in `~/.config/systemd/user/`, and reaches `default.target` prematurely without starting user daemons.
+  When systemd launches `user@1000.service`, `${HOME}` is not yet mounted. As a result, `systemd --user` processes an empty directory, misses user unit files in `~/.config/systemd/user/`, and reaches `default.target` prematurely without starting user daemons.
 * **Architectural Remediation**:
-  Critical background services (like Antigravity Remote Control and Homelab Stack Orchestration) are placed in `/etc/systemd/system/` under `multi-user.target`, bound to `User=brandon`, and equipped with startup polling loops.
+  Critical background services (like Antigravity Remote Control and Homelab Stack Orchestration) are placed in `/etc/systemd/system/` under `multi-user.target`, bound to `User=${USER}`, and equipped with startup polling loops.
 
 ### Appliance OS Workaround (Go 1.23+ GODEBUG Fix)
 UGREEN NAS OS injects `GODEBUG=tlskyber=0` into `/etc/profile.d/go.sh` and `/etc/systemd/system.conf`. Because Go 1.23 removed the legacy `tlskyber` setting, Go 1.23+ binaries (including developer tools, telemetry agents, and remote servers) panic on startup.

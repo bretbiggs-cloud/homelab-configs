@@ -1,53 +1,37 @@
-# ==============================================================================
-# Stack: Tailscale Subnet Router (tailscale/compose.yml)
-#
-# Purpose:
-#   Connects the homelab to the Tailscale mesh network and acts as a subnet
-#   router advertising 192.168.0.0/24 so remote WireGuard peers (phones, laptops)
-#   can reach internal services and LAN devices directly.
-#
-# Network Topology:
-#   Dual-homed across two Docker networks:
-#     1. 'external_npm' (macvlan on eth0): Assigns Tailscale its own dedicated
-#        LAN IP (192.168.0.5) so it can reach the physical LAN gateway
-#        (192.168.0.1), Pi-hole (192.168.0.2), the NAS host OS (192.168.0.3),
-#        and critically, Nginx Proxy Manager (192.168.0.4) without being
-#        blocked by Linux kernel macvlan-to-host isolation rules.
-#     2. 'homelab' (internal bridge on 192.168.255.0/24): Connects Tailscale
-#        directly to internal backend containers.
-# ==============================================================================
-
+# Private application access, not a subnet router. No host network mutations.
 services:
   tailscale:
-    image: tailscale/tailscale:latest
-    container_name: tailscale
-    hostname: homelab
+    image: tailscale/tailscale@sha256:ed6480b33c6eb67c9cbd203ed42b9fb57e361986725b6856def71b7a3d9e276c
+    container_name: homelab-v2-tailscale
+    hostname: substation
+    user: "${PUID:?See env.example for default.}:${PGID:?See env.example for default.}"
     restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    sysctls:
-      - net.ipv4.ip_forward=1
-      - net.ipv6.conf.all.forwarding=1
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
-      - TS_AUTHKEY=${TS_AUTHKEY:-}
-      - TS_HOSTNAME=homelab
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_USERSPACE=false
-      - TS_ROUTES=192.168.0.0/24
-      - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:---snat-subnet-routes=true --accept-dns=false}
+      TS_HOSTNAME: substation
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SOCKET: /tmp/tailscaled.sock
+      TS_USERSPACE: "true"
+      TS_AUTH_ONCE: "true"
+      # Allow time for interactive enrollment without rotating login links.
+      TS_BOOT_TIMEOUT: 24h
+      TS_ACCEPT_DNS: "false"
+      TS_SERVE_CONFIG: /config/serve.json
+      TS_EXTRA_ARGS: --accept-routes=false
     volumes:
-      - ${DOCKER_DATA_DIR:-/volume2/docker}/tailscale/data:/var/lib/tailscale
-      - /dev/net/tun:/dev/net/tun
+      - ../.configs/tailscale:/config:ro
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/tailscale/data:/var/lib/tailscale
     networks:
-      homelab:
-      external_npm:
-        ipv4_address: ${TAILSCALE_IPV4_ADDRESS:-192.168.0.5}
-
+      - homelab
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 networks:
   homelab:
     external: true
-  external_npm:
-    external: true
+    name: homelab-v2-jellyfin_homelab

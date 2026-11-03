@@ -1,82 +1,22 @@
-# Homelab Services Infrastructure and Configuration
+# Synology HomeLab
 
-This repository defines the Docker Compose service stacks, tracked application configurations, and automation scripts for the UGREEN NAS homelab environment (`nas.home` / `turing.home`).
+Docker-based media services on a single Synology volume, with Tailscale-only remote access and NordVPN-protected downloads. Adapted from [ParanoydAndroid/homelab-configs](https://github.com/ParanoydAndroid/homelab-configs).
 
-The repository is checked out at `${DOCKGE_STACKS_DIR}` (symlinked to `/home/${USER}/services`) so that all stacks are simultaneously version-controlled in git and manageable through [Dockge](https://dockge.kuma.pet/). Persistent state is mapped to NVMe storage (`/volume2/docker`) for high-IOPS performance, while media libraries reside on mechanical RAID 5 storage (`/volume1/media`).
+## Start here
 
----
+- [Current configuration, ports, storage and constraints](.docs/synology.md)
+- [Synology optimization decisions and owner steps](.docs/performance-optimization-synology.md)
+- [Jellyfin Enhanced installation and integration](.docs/jellyfin-enhanced.md)
+- [Agent rules and Synology overrides](.agents/rules/project-conventions.md)
 
-## 1. High-Level Ingress Topology
+The running core is Jellyfin, Tailscale, Gluetun/NordVPN, qBittorrent, Prowlarr, FlareSolverr, Radarr, Sonarr and Seerr. Homepage, Portainer and Omada are separately managed and remain untouched.
 
-Traffic ingress is divided into two strict, non-overlapping pillars:
+## Operations
 
-```text
-[ Internet Client ] ---> Cloudflare Edge ---> [ Cloudflare Tunnel ] ---+
-                                                                       |
-[ Remote Phone/PC ] ---> Tailscale Mesh  ---> [ Tailscale Router ] ----+---> [ Nginx Proxy Manager ] ---> [ Backend Stacks ]
-                                                                       |     (192.168.0.4 / turing)      (192.168.255.0/24)
-[ Local LAN Client] ---------------------------------------------------+
-```
+Use the active service Compose definitions and their local environment files. Do not run the inherited UGREEN homelab.sh setup/backup/restore/test commands on DSM. They assume a different OS, network and backup system. The repository is configuration, not a backup of databases or media.
 
-* **Public Web Ingress (`*.kamaka.tech`)**: Ingress routes through an outbound Cloudflare Zero Trust tunnel (`cloudflared`) to Nginx Proxy Manager without requiring port forwarding behind CGNAT residential internet.
-* **Private Admin Ingress (`*.turing.home`)**: Remote management routes through an encrypted Tailscale WireGuard mesh overlay via an internal subnet router (`192.168.0.5`), restricted by reverse proxy ACLs (`192.168.0.0/16`).
+The original UGREEN descriptions are retained as explicitly historical references in the other .docs pages and [upstream README](.docs/upstream-readme.md). Earlier dated Synology records describe intermediate migration states; current production facts are consolidated in .docs/synology.md.
 
----
+## Publication
 
-## 2. Quickstart
-
-### 2.1 Fresh Host Provisioning
-
-```bash
-# 1. Clone the repository into ${DOCKGE_STACKS_DIR} and symlink to ~/services
-sudo mkdir -p "${DOCKGE_DIR:-/opt/${USER}/dockge}"
-git clone <repo-url> "${DOCKGE_STACKS_DIR:-/opt/${USER}/dockge/stacks}"
-ln -s "${DOCKGE_STACKS_DIR:-/opt/${USER}/dockge/stacks}" "/home/${USER}/services"
-cd "/home/${USER}/services"
-
-# 2. Run initial convergence (creates networks, root .env, and stack templates)
-sudo ./homelab.sh setup
-
-# 3. Populate required per-stack secrets in generated .env files
-#    (cloudflared, tailscale, qbittorrentvpn, jellyfin, sonarr-radarr, seerr, tandoor)
-
-# 4. Re-run setup to sync variables, deploy configs, and launch all stacks
-sudo ./homelab.sh setup
-```
-
-### 2.2 Routine Updates
-
-```bash
-cd ~/services
-git pull
-sudo ./homelab.sh setup
-```
-
----
-
-## 3. Automation CLI (`homelab.sh`)
-
-`homelab.sh` is an idempotent orchestration CLI anchoring repository configurations to host state:
-
-| Subcommand | Description |
-| :--- | :--- |
-| `sudo ./homelab.sh setup` | End-to-end host convergence: applies OS fixes, syncs `.env` files, provisions networks, deploys Dockge orchestrator compose, and starts all stacks. |
-| `./homelab.sh startup` | Non-interactive boot hook designed for systemd execution on host startup with database readiness checks. |
-| `sudo ./homelab.sh backup [-t <type|name>] [-m <msg>]` | Stages zero-downtime DB dumps, snapshots volumes with Restic, commits git changes, applies repeatable SemVer/CalVer/custom tags, pushes to remote, and archives `.env` secrets. |
-| `./homelab.sh snapshots` | Lists historical Restic backup snapshots with timestamps, snapshot IDs, and repository sizes. |
-| `sudo ./homelab.sh restore [snap] [svc]` | Restores full volume state or an individual service from a Restic snapshot with pre-restore safety checks. |
-| `./homelab.sh test [suite]` | Modular smoke and regression test suite verifying containers, direct admin ports, routing, interconnects, security, and backup automation. |
-
----
-
-## 4. Documentation Index
-
-Detailed architectural specifications, configuration runbooks, and references are organized into dedicated documents under `.docs/`:
-
-* **[Project Organization & Architecture](.docs/project-organization.md)**: Filesystem layout, Dockge compatibility constraints, storage tiering rationale (PCIe NVMe vs mechanical RAID 5), and the Restic-based volume backup and disaster recovery model.
-* **[Service Catalog and Port Reference](.docs/service-catalog.md)**: Uniform catalog entries for all 15 services and the host OS portal, active port bindings, internal/external addresses, volume mappings, and container interconnections.
-* **[Environment Variable Reference & Cheat Sheet](.docs/env-reference.md)**: Central dictionary of every global and per-stack environment variable, defaults, secrets, and Homepage dashboard discovery mechanisms.
-* **[Dual-Ingress Networking & Security](.docs/networking.md)**: Subnet topology (`192.168.0.0/24` LAN, `192.168.255.0/24` bridge), macvlan routing, static IP table, split DNS, TLS certificates, and edge security hardening.
-* **[Operations and Appliance Engineering](.docs/operations.md)**: Operational runbooks, backup and secret restoration procedures, systemd background units, asynchronous mount handling, and OS workarounds.
-* **[Changelog](CHANGELOG.md)**: Historical release milestones with paired semantic and CalVer tags.
-* **[Project Backlog](BACKLOG.md)**: Tracked technical improvements and non-blocking optimizations.
+Never commit .env files, credentials, private logs, raw container inspections, databases, runtime state or secret-bearing backups. Review an explicit file allowlist before release. The original author remains the upstream source; publish the same reviewed Synology release to the owner's private repository and public fork, as explicitly requested.

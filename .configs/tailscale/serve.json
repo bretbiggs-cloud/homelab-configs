@@ -1,0 +1,22 @@
+{
+  "TCP": {
+    "8096": {
+      "TCPForward": "homelab-v2-jellyfin:8096"
+    },
+    "8082": {
+      "TCPForward": "homelab-v2-vpn:8082"
+    },
+    "9697": {
+      "TCPForward": "homelab-v2-prowlarr:9696"
+    },
+    "7879": {
+      "TCPForward": "homelab-v2-radarr:7878"
+    },
+    "8990": {
+      "TCPForward": "homelab-v2-sonarr:8989"
+    },
+    "5056": {
+      "TCPForward": "homelab-v2-seerr:5055"
+    }
+  }
+}

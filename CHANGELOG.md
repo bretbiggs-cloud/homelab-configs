@@ -6,6 +6,76 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.0] / [2026.11.2.1] - First Synology release (2026-11-02)
+
+First release of the Synology adaptation; the upstream 2.x entries below are inherited project history.
+
+### Added
+- Single-volume DSM deployment of Jellyfin, Tailscale, NordVPN/Gluetun, qBittorrent, Prowlarr, FlareSolverr, Radarr, Sonarr and Seerr with pinned images and 1080p request/import workflows.
+- Active Jellyfin Enhanced 12.14.0.0 on Jellyfin 12.4.0, Seerr search and LAN/Tailnet URL mappings.
+- Kids rating restrictions and curated browsing collection; metadata/collection maintenance tools.
+- Synology topology, environment inventory, optimization decisions, rollback guidance and production acceptance checks.
+
+### Changed
+- Completed replacement-stack cutover and removed old services/settings after owner confirmation; preserved media and unrelated services.
+- Retained DSM-managed Docker, single-volume storage and private Tailscale access. Labeled upstream UGREEN/systemd/Restic material as reference and blocked the unsupported host runner on DSM.
+- Enabled old transcode-segment cleanup alongside existing throttling; verified hardlinks and log rotation. Deferred RAM-heavy tmpfs and host/storage changes requiring separate input.
+
+### Fixed
+- Corrected documentation links and stale deployed-platform claims; provided sanitized validation fixtures.
+- Documented optional indexer challenges and native TV-client limitations.
+
+### Security
+- Verified read-only Jellyfin media, downloader VPN isolation and no public Funnel ingress.
+- Prevented automatic child-user import; verified kids cannot use Enhanced's Seerr integration and public client configuration excludes the Seerr key.
+- Excluded credentials, runtime data and private backups from reviewed publication. Verified an online SQLite checkpoint; independent full-stack backup remains outstanding.
+
+### Validation
+- Production release, cutover and retained-media suites passed, including child-account access checks. Active Compose files, images, environment templates and documentation links checked.
+- Explicit skips: incompatible UGREEN suite, deliberate production VPN outage and full disaster-recovery restore. Native TV UI requires client-side verification.
+
+---
+## [2.5.0] / [2026.11.1.2] - Modular Agent Skills Architecture & Documentation Hygiene (2026-11-01)
+
+### Added
+* Modular agent skills architecture under `.agents/skills/` (mirrored via `.skills/`) employing progressive disclosure and structured prompt algorithms:
+  - `feature-initiation`: Mainline sync, branch checkout, plan drafting, and adversarial "grill-me" design review cycle.
+  - `feature-completion`: Test suite verification, stop-on-failure, roll-up SemVer/CalVer changelog synthesis, merge, and dual tagging.
+  - `stack-authoring`: Compose authoring guidelines, canonical key ordering, variable assertion syntax (`${VAR:?See env.example for default.}`), non-root user model, and network attachment.
+  - `backup-recovery`: Restic volume snapshot management, online database staging, snapshot inspection, and full/granular disaster recovery.
+  - `network-diagnostics`: Diagnostic triage flowchart for reverse proxy virtual hosts, container DNS, WireGuard killswitches, and Tailscale routing.
+  - `test-authoring`: Systematic recipe for authoring automated smoke, interconnect, and negative security tests in `.tests/suites/`.
+* Supporting reference documentation for each skill under `.agents/skills/<name>/references/` (SemVer/CalVer tier guidelines, Compose specification, restore runbooks, routing topologies, and test suite catalogs).
+
+### Changed
+* Streamlined `.agents/rules/project-conventions.md` to focus strictly on invariant guardrails, persona/tone, and security boundaries, delegating procedural workflows to on-demand skills.
+* Removed all hardcoded `file:///` URIs across documentation, replacing them with standard Markdown relative links.
+* Audited and updated stale documentation references in `.docs/networking.md`, `.docs/env-reference.md`, and `.agents/artifacts/architecture.md` left over from the Restic backup migration.
+* Added Section 4.3 to `.docs/operations.md` tracking systemd nightly backup service and timer unit definitions.
+* Pruned leftover untracked directories (`.configs/nginx/nginx/`) to maintain repository hygiene.
+
+---
+
+## [2.4.0] / [2026.11.1.1] - Dedicated Tailscale PIA VPN Bridge & Environment Variable Standardization (2026-11-01)
+
+### Added
+* Dedicated `vpn-bridge` stack (`vpn-bridge/compose.yml`) pairing a Private Internet Access (PIA) WireGuard container (`vpn-bridge-pia`) with a Tailscale container (`vpn-bridge-tailscale`) advertising itself as an exit node (`--advertise-exit-node`).
+* Kernel policy routing rule (`priority 5200`) directing Tailscale daemon traffic (`fwmark 0x80000`) into WireGuard table `51820`, enabling seamless DERP/control plane connectivity over WireGuard without tripping PIA's LAN kill switch.
+* Automated container health and egress assertions in test suite (`test_docker_up_vpn_bridge_*`, `test_interconnect_vpn_bridge_pia_egress`, `test_interconnect_vpn_bridge_tailscale_backend_state`).
+* Standardized feature completion runbook and skill (`.agents/skills/feature-completion/SKILL.md`) with strict stop-on-failure verification, changelog roll-up synthesis, and dual SemVer/CalVer tagging.
+
+### Changed
+* Overhauled repository-wide environment variable defaults to enforce a Single Source of Truth: all defaults are declared strictly in `.env.example` templates, while all Compose files use required assertion syntax `${VAR:?See env.example for default.}`.
+* Inlined immutable stack invariants (`HOMEPAGE_ALLOWED_HOSTS`, `LOG_LEVEL`, `TS_EXTRA_ARGS`, and `CAPTCHA_SOLVER`) directly into `compose.yml` rather than exposing them as environment variables.
+* Automated generation of 50-character cryptographic tokens for Django `SECRET_KEY` inside `.scripts/env-tools.sh` during `homelab.sh setup` if unpopulated.
+* Switched `vpn-bridge` upstream resolver (`VPNDNS`) to Quad9 (`9.9.9.9`, `149.112.112.112`) for Swiss GDPR-compliant, privacy-audited, malware-blocking DNS with DNSSEC validation.
+* Removed Tailscale CGNAT subnet (`100.64.0.0/10`) from `LOCAL_NETWORK` to eliminate routing conflicts with the Linux Forwarding Information Base.
+
+### Security
+* Complete isolation of exit node WAN traffic through domestic US PIA endpoints (Chicago / East Coast), masking mobile and remote client ISP addresses while preserving split-LAN access to private homelab services (`*.turing.home`).
+
+---
+
 ## [2.3.0] / [2026.11.1] - Restic Backup Engine & Storage IOPS Hardening (2026-11-01)
 
 ### Added

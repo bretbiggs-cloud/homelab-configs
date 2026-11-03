@@ -1,3 +1,5 @@
+> Historical upstream UGREEN reference, not live Synology facts. See [current Synology configuration](synology.md). Do not apply its host paths, systemd services, networks or automation to DSM.
+
 # Project Organization and Architecture
 
 This document details the filesystem layout, container orchestrator design, storage tiering, and declarative configuration management model for the homelab repository.
@@ -62,7 +64,7 @@ The repository root is deployed at `${DOCKGE_STACKS_DIR}` (typically `/opt/${USE
 2. **Dot-Prefixed Infrastructure Directories**:
    Dockge automatically scans every non-hidden directory in its stacks folder as a manageable Compose project. Non-stack assets (documentation, helper scripts, configuration templates, agent artifacts, and test suites) **must** reside in dot-prefixed directories (`.docs/`, `.scripts/`, `.configs/`, `.tests/`, `.agents/`). Dockge ignores hidden directories completely, preventing ghost or broken stacks from appearing in the UI.
 3. **External Dockge Deployment**:
-   Dockge cannot cleanly manage or restart its own container if its Compose file resides inside the stacks directory it watches. Dockge's own definition is tracked at [.configs/dockge/compose.yml](file:///home/brandon/services/.configs/dockge/compose.yml) and deployed to `${DOCKGE_DIR}/compose.yml` (`/opt/${USER}/dockge/compose.yml`, one level above `stacks/`).
+   Dockge cannot cleanly manage or restart its own container if its Compose file resides inside the stacks directory it watches. Dockge's own definition is tracked at [.configs/dockge/compose.yml](../.configs/dockge/compose.yml) and deployed to `${DOCKGE_DIR}/compose.yml` (`/opt/${USER}/dockge/compose.yml`, one level above `stacks/`).
 
 ---
 
@@ -110,6 +112,6 @@ All container application state and persistent volumes under `${DOCKER_DATA_DIR}
 * **Untracked Secret Archiving**:
   All untracked live `.env` files are archived into a timestamped tarball in `${DOCKER_DATA_DIR}/backup/homelab/latest_env_secrets.tar.gz`.
 * **Deduplicated & Compressed Snapshots (`./homelab.sh backup`)**:
-  Streams deduplicated, compressed snapshots of `${DOCKER_DATA_DIR}` to `${BACKUP_RESTIC_REPO:-/volume1/backups/homelab-docker}` using native Restic (`--insecure-no-password`) with automatic cache and log exclusions, enforcing 30-day retention (`--keep-daily 30 --prune`).
+  Streams deduplicated, compressed snapshots of `${DOCKER_DATA_DIR}` to `${BACKUP_RESTIC_REPO}` using native Restic (`--insecure-no-password`) with automatic cache and log exclusions, enforcing 30-day retention (`--keep-daily 30 --prune`).
 * **Granular & Full Restoration (`./homelab.sh restore`)**:
   Restores either the full Docker volume or a single targeted service directory from any snapshot, with safety checks to ensure running containers are stopped before active files are modified.

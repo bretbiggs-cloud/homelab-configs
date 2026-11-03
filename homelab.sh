@@ -32,6 +32,13 @@
 # ==============================================================================
 set -euo pipefail
 
+# DSM uses the separately verified Synology stacks and PowerShell release checks.
+# Refuse inherited UGREEN host mutations instead of applying systemd/macvlan defaults.
+if [[ -f /etc.defaults/VERSION ]] && grep -q 'DSM' /etc.defaults/VERSION; then
+    echo 'Use .docs/synology.md and the Synology release checks; upstream homelab.sh is not supported on DSM.' >&2
+    exit 2
+fi
+
 # Resolve script directory and source library modules
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/.scripts/common.sh"

@@ -1,10 +1,18 @@
+> Historical upstream UGREEN reference, not live Synology facts. See [current Synology configuration](synology.md). Do not apply its host paths, systemd services, networks or automation to DSM.
+
 # Environment Variable Reference & Cheat Sheet
 
 This document serves as the central dictionary and reference guide for every environment variable used across the homelab infrastructure.
 
-Configuration follows a two-tier model:
-1. **Global Root Variables ([`.env.example`](file:///home/brandon/services/.env.example))**: Define host paths, network interfaces, runtime IDs, and timezone. Automatically propagated into child stack `.env` files by `./homelab.sh setup`.
-2. **Per-Stack Variables & Secrets ([`<stack>/.env.example`](file:///home/brandon/services/))**: Define application secrets, credentials, and API keys.
+Configuration follows a two-tier model with explicit runtime assertions:
+1. **Global Root Variables ([`.env.example`](../.env.example))**: Define host paths, network interfaces, runtime IDs, and timezone. Automatically propagated into child stack `.env` files by `./homelab.sh setup`.
+2. **Per-Stack Variables & Secrets ([`<stack>/.env.example`](../))**: Define application secrets, credentials, and API keys.
+
+### Single Source of Truth & Required Variable Enforcement
+- **Default Value Single Source of Truth**: All runtime variable defaults are defined strictly in `.env.example` templates.
+- **Compose Assertion Syntax**: Docker Compose files (`compose.yml`) treat runtime variables as required using `${VAR:?message}`. This guarantees that missing variables are caught immediately at deploy time without duplicating default values across multiple Compose files.
+- **Fixed Invariants**: Variables representing immutable architectural decisions (such as `HOMEPAGE_ALLOWED_HOSTS`, `LOG_LEVEL`, `TS_EXTRA_ARGS`, and `CAPTCHA_SOLVER`) are inlined directly as literal values in `compose.yml` and omitted from `.env.example`.
+- **Automatic Secret Generation**: Cryptographic secrets like Django `SECRET_KEY` are automatically generated from `/dev/urandom` during `./homelab.sh setup` if left blank.
 
 ---
 
@@ -16,7 +24,7 @@ These variables are defined in the repository root `.env` and synced automatical
 * **Default**: `/volume2/docker`
 * **Type**: Filesystem Path
 * **Description**: Root host directory on high-speed NVMe storage for persistent container data, application configurations, SQLite databases, and caches.
-* **Reference**: [Storage Tiering](file:///home/brandon/services/.docs/project-organization.md#3-storage-tiering-architecture)
+* **Reference**: [Storage Tiering](./project-organization.md#3-storage-tiering-architecture)
 
 ### `MEDIA_DIR`
 * **Default**: `/volume1/media`
@@ -27,7 +35,7 @@ These variables are defined in the repository root `.env` and synced automatical
 * **Default**: `/opt/${USER}/dockge`
 * **Type**: Filesystem Path
 * **Description**: Host directory where Dockge's own `compose.yml` and `.env` reside (one level above stacks).
-* **Reference**: [Dockge Service Entry](file:///home/brandon/services/.docs/service-catalog.md#dockge)
+* **Reference**: [Dockge Service Entry](./service-catalog.md#dockge)
 
 ### `DOCKGE_STACKS_DIR`
 * **Default**: `/opt/${USER}/dockge/stacks`
@@ -81,145 +89,163 @@ These variables are defined in the repository root `.env` and synced automatical
 These variables are defined in each `<stack>/.env.example` template and populated in untracked `<stack>/.env` files.
 
 ### `cloudflared` Stack
-*See [Cloudflare Tunnel Service Entry](file:///home/brandon/services/.docs/service-catalog.md#cloudflare-tunnel-cloudflared).*
+*See [Cloudflare Tunnel Service Entry](./service-catalog.md#cloudflare-tunnel-cloudflared).*
 
-* **`CLOUDFLARE_TUNNEL_TOKEN`**  
-  *Default*: None (Required Secret)  
+* **`CLOUDFLARE_TUNNEL_TOKEN`**
+  *Default*: None (Required Secret)
   *Description*: Base64 authentication token generated in Cloudflare Zero Trust Dashboard (**Networks -> Tunnels -> homelab-media**).
 
 ---
 
 ### `tailscale` Stack
-*See [Tailscale Router Service Entry](file:///home/brandon/services/.docs/service-catalog.md#tailscale-router).*
+*See [Tailscale Router Service Entry](./service-catalog.md#tailscale-router).*
 
-* **`TS_AUTHKEY`**  
-  *Default*: None (Required Secret)  
+* **`TS_AUTHKEY`**
+  *Default*: None (Required Secret)
   *Description*: Reusable pre-authentication key generated in Tailscale Admin Console (**Settings -> Keys**).
-* **`TS_HOSTNAME`**  
-  *Default*: `homelab`  
+* **`TS_HOSTNAME`**
+  *Default*: `homelab`
   *Description*: Node name advertised to the Tailscale mesh overlay.
-* **`TS_ROUTES`**  
-  *Default*: `192.168.0.0/24`  
+* **`TS_ROUTES`**
+  *Default*: `192.168.0.0/24`
   *Description*: LAN subnet route advertised to the mesh network.
-* **`TS_EXTRA_ARGS`**  
-  *Default*: `--snat-subnet-routes=true --accept-dns=false`  
+* **`TS_EXTRA_ARGS`**
+  *Default*: `--snat-subnet-routes=true --accept-dns=false`
   *Description*: Extra CLI flags enabling SNAT masquerading and preserving container-local DNS resolution.
 
 ---
 
-### `qbittorrentvpn` Stack
-*See [WireGuard PIA & qBittorrent Service Entry](file:///home/brandon/services/.docs/service-catalog.md#wireguard-pia-vpn--qbittorrent).*
+### `vpn-bridge` Stack
+*See [VPN Bridge Service Entry](./service-catalog.md#vpn-bridge-tailscale-exit-node-via-pia-wireguard).*
 
-* **`VPN_USER`**  
-  *Default*: None (Required Secret)  
+* **`VPN_USER`**
+  *Default*: None (Required Secret)
   *Description*: Private Internet Access account username (`pXXXXXXX`).
-* **`VPN_PASS`**  
-  *Default*: None (Required Secret)  
+* **`VPN_PASS`**
+  *Default*: None (Required Secret)
   *Description*: Private Internet Access account password.
-* **`QBITTORRENT_PASSWORD`**  
-  *Default*: None (Required Secret)  
+* **`TS_AUTHKEY`**
+  *Default*: None (Required Secret)
+  *Description*: One-time or reusable pre-authentication key generated in Tailscale Admin Console (**Settings -> Keys**) with Exit Node permissions.
+* **`PIA_REGION`**
+  *Default*: `us_east,us_chicago,us_nyc`
+  *Description*: Comma-separated list of PIA US server regions for exit node egress.
+
+---
+
+### `qbittorrentvpn` Stack
+*See [WireGuard PIA & qBittorrent Service Entry](./service-catalog.md#wireguard-pia-vpn--qbittorrent).*
+
+* **`VPN_USER`**
+  *Default*: None (Required Secret)
+  *Description*: Private Internet Access account username (`pXXXXXXX`).
+* **`VPN_PASS`**
+  *Default*: None (Required Secret)
+  *Description*: Private Internet Access account password.
+* **`QBITTORRENT_PASSWORD`**
+  *Default*: None (Required Secret)
   *Description*: WebUI administrator password for qBittorrent.
-* **`LOC`**  
-  *Default*: `ca_ontario,ca_toronto,ca_montreal`  
+* **`LOC`**
+  *Default*: `ca_ontario,ca_toronto,ca_montreal`
   *Description*: Comma-separated list of PIA regions supporting NextGen dynamic port forwarding.
-* **`LOCAL_NETWORK`**  
-  *Default*: `192.168.0.0/16`  
+* **`LOCAL_NETWORK`**
+  *Default*: `192.168.0.0/16`
   *Description*: LAN and Docker subnets permitted to reach the WebUI without traversing the WireGuard tunnel.
-* **`PORT_FORWARDING`**  
-  *Default*: `1`  
+* **`PORT_FORWARDING`**
+  *Default*: `1`
   *Description*: Enables automated dynamic port forward requests from PIA.
-* **`PORT_PERSIST`**  
-  *Default*: `1`  
+* **`PORT_PERSIST`**
+  *Default*: `1`
   *Description*: Persists signature tokens in `/pia/portsig.json` across container restarts.
-* **`PORT_SCRIPT`**  
-  *Default*: `/set-qbt-port.sh`  
+* **`PORT_SCRIPT`**
+  *Default*: `/set-qbt-port.sh`
   *Description*: Callback script executed upon port assignment to update qBittorrent via WebUI API.
 
 ---
 
 ### `jellyfin` Stack
-*See [Jellyfin Service Entry](file:///home/brandon/services/.docs/service-catalog.md#jellyfin).*
+*See [Jellyfin Service Entry](./service-catalog.md#jellyfin).*
 
-* **`JELLYFIN_API_KEY`**  
-  *Default*: None (Tracked Secret)  
+* **`JELLYFIN_API_KEY`**
+  *Default*: None (Tracked Secret)
   *Description*: API token generated in Jellyfin Dashboard (**Administration -> API Keys**). Used by Homepage to poll live stream metrics.
 
 ---
 
 ### `sonarr-radarr` Stack
-*See [Radarr](file:///home/brandon/services/.docs/service-catalog.md#radarr), [Sonarr](file:///home/brandon/services/.docs/service-catalog.md#sonarr), and [Prowlarr](file:///home/brandon/services/.docs/service-catalog.md#prowlarr).*
+*See [Radarr](./service-catalog.md#radarr), [Sonarr](./service-catalog.md#sonarr), and [Prowlarr](./service-catalog.md#prowlarr).*
 
-* **`RADARR_API_KEY`**  
-  *Default*: None (Deterministic Secret)  
+* **`RADARR_API_KEY`**
+  *Default*: None (Deterministic Secret)
   *Description*: 32-character REST API token for Radarr service integrations and Homepage widgets.
-* **`SONARR_API_KEY`**  
-  *Default*: None (Deterministic Secret)  
+* **`SONARR_API_KEY`**
+  *Default*: None (Deterministic Secret)
   *Description*: 32-character REST API token for Sonarr service integrations and Homepage widgets.
-* **`PROWLARR_API_KEY`**  
-  *Default*: None (Deterministic Secret)  
+* **`PROWLARR_API_KEY`**
+  *Default*: None (Deterministic Secret)
   *Description*: 32-character REST API token for Prowlarr indexer synchronization.
 
 ---
 
 ### `seerr` Stack
-*See [Seerr Service Entry](file:///home/brandon/services/.docs/service-catalog.md#seerr).*
+*See [Seerr Service Entry](./service-catalog.md#seerr).*
 
-* **`SEERR_API_KEY`**  
-  *Default*: None (Deterministic Secret)  
+* **`SEERR_API_KEY`**
+  *Default*: None (Deterministic Secret)
   *Description*: 32-character REST API token for Seerr request management and media monitoring.
 
 ---
 
 ### `tandoor` Stack
-*See [Tandoor Recipes Service Entry](file:///home/brandon/services/.docs/service-catalog.md#tandoor-recipes).*
+*See [Tandoor Recipes Service Entry](./service-catalog.md#tandoor-recipes).*
 
-* **`SECRET_KEY`**  
-  *Default*: None (Required Cryptographic Secret)  
+* **`SECRET_KEY`**
+  *Default*: None (Required Cryptographic Secret)
   *Description*: Django cryptographic signing key (generate via `base64 /dev/urandom | head -c50`).
-* **`POSTGRES_DB`**  
-  *Default*: `recipes`  
+* **`POSTGRES_DB`**
+  *Default*: `recipes`
   *Description*: Database name in PostgreSQL.
-* **`POSTGRES_USER`**  
-  *Default*: `djangouser`  
+* **`POSTGRES_USER`**
+  *Default*: `djangouser`
   *Description*: PostgreSQL database username.
-* **`POSTGRES_PASSWORD`**  
-  *Default*: `recipes_password`  
+* **`POSTGRES_PASSWORD`**
+  *Default*: `recipes_password`
   *Description*: PostgreSQL database password.
 
 ---
 
 ### `homepage` Stack
-*See [Homepage Service Entry](file:///home/brandon/services/.docs/service-catalog.md#homepage).*
+*See [Homepage Service Entry](./service-catalog.md#homepage).*
 
-* **`HOMEPAGE_VAR_PIHOLE_KEY`**  
-  *Default*: None (Tracked Secret)  
+* **`HOMEPAGE_VAR_PIHOLE_KEY`**
+  *Default*: None (Tracked Secret)
   *Description*: Pi-hole administrative Web password or API token used by Homepage to query local DNS metrics.
 
 ---
 
 ### `postgres` Stack
-*See [PostgreSQL Service Entry](file:///home/brandon/services/.docs/service-catalog.md#postgresql).*
+*See [PostgreSQL Service Entry](./service-catalog.md#postgresql).*
 
-* **`POSTGRES_DB`**  
-  *Default*: `postgres`  
+* **`POSTGRES_DB`**
+  *Default*: `postgres`
   *Description*: Default maintenance database name.
-* **`POSTGRES_USER`**  
-  *Default*: `postgres`  
+* **`POSTGRES_USER`**
+  *Default*: `postgres`
   *Description*: PostgreSQL superuser username.
-* **`POSTGRES_PASSWORD`**  
-  *Default*: `postgres`  
+* **`POSTGRES_PASSWORD`**
+  *Default*: `postgres`
   *Description*: Superuser password (isolated to internal `homelab` Docker bridge).
 
 ---
 
 ### `nginx` Stack
-*See [NPM Service Entry](file:///home/brandon/services/.docs/service-catalog.md#nginx-proxy-manager-npm).*
+*See [NPM Service Entry](./service-catalog.md#nginx-proxy-manager-npm).*
 
-* **`DISABLE_IPV6`**  
-  *Default*: `"true"`  
+* **`DISABLE_IPV6`**
+  *Default*: `"true"`
   *Description*: Forces Nginx Proxy Manager to listen on IPv4 only.
-* **`DB_SQLITE_FILE`**  
-  *Default*: `/data/db.sqlite`  
+* **`DB_SQLITE_FILE`**
+  *Default*: `/data/db.sqlite`
   *Description*: Path to NPM SQLite database inside container.
 
 ---
@@ -240,4 +266,4 @@ Homepage widgets consume service secrets without committing plaintext credential
    ```
    Docker Compose reads each stack's `.env` and interpolates the API key into container metadata. Homepage reads the resolved key via `/var/run/docker.sock` and polls the service across the `homelab` bridge.
 2. **Static Environment Substitution (`HOMEPAGE_VAR_*` for External Appliances)**:
-   Non-containerized appliances (like Pi-hole on `192.168.0.2`) are declared in [.configs/homepage/services.yaml](file:///home/brandon/services/.configs/homepage/services.yaml). Homepage natively interpolates `{{HOMEPAGE_VAR_<NAME>}}` placeholders with matching environment variables declared in `homepage/compose.yml`.
+   Non-containerized appliances (like Pi-hole on `192.168.0.2`) are declared in `${DOCKER_DATA_DIR}/homepage/data/services.yaml`. Homepage natively interpolates `{{HOMEPAGE_VAR_<NAME>}}` placeholders with matching environment variables declared in `homepage/compose.yml`.

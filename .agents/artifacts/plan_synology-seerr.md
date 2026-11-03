@@ -1,0 +1,11 @@
+# Synology Seerr core phase
+
+User authorized continuing the selected stack without routine prompts; Seerr automatic approvals were explicitly requested. New homelab-v2-seerr, pinned official image sha256d8fab675b55ad293ded98fd71efcfd46054cbad9746534ae1cc4794a88c0b3be, supported UID1026:GID100 override, init, cap_dropALL/no-new-privileges. Own /volume1/docker/homelab-v2/seerr/data:/app/config only, LAN5056/internal5055, private Tailscale5056. No media, Docker socket or old-config mount.
+
+Authenticate through accepted new Jellyfin using privately saved admin credential. Connect only new Radarr/Sonarr with their1080p profiles and isolated shared roots. Default request+auto-approve permissions for admitted trusted users, no4K request permissions; do not import other users or expose public ingress. Automatic search enabled for future intentional requests; do not create test requests or trigger acquisition during setup. No claims of automatic request/import acceptance without a controlled later request.
+
+Native server tests, app auth and anonymous denial, only new endpoints/roots/profiles, Tailscale backend, restart persistence and old-eight preservation. Old Seerr5055 stays running. Rollback removes only new service/5056 forward with its new state retained. No publication, cutover, old deletions or backup infrastructure. Official deployment reference https://docs.seerr.dev/getting-started/docker/ .
+
+Implemented core connections and automatic approval160 with new-user enrollment off. Added new empty import paths to existing Jellyfin libraries using refreshLibrary=false, preserving all existing locations/read-only mount. Native integration tests and core suite passed before restart; persistence retest follows. No actual requests/downloads initiated.
+
+Final verification: restart took longer than initial readiness window, then all Seerr acceptance checks passed including saved Jellyfin login, native Radarr/Sonarr tests, approval policy, zero requests, Tailscale backend, preserved/new Jellyfin folders and unchanged old-eight IDs/start times. Jellyfin health Healthy. No full scan or media requests triggered. User remote Seerr login and actual automated import/playback remain unverified.

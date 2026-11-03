@@ -1,0 +1,27 @@
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr@sha256:31cb2def3155509d3e1720a59afbe83ea2f3dbe96121d5b3ef24892385bd11c6
+    container_name: homelab-v2-prowlarr
+    hostname: homelab-v2-prowlarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PUID: ${PUID:?See env.example for default.}
+      PGID: ${PGID:?See env.example for default.}
+      TZ: ${TZ:?See env.example for default.}
+    volumes:
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/prowlarr/data:/config
+    ports:
+      - "${NAS_LAN_IP:?See env.example for default.}:9697:9696"
+    networks:
+      - homelab
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  homelab:
+    external: true
+    name: homelab-v2-jellyfin_homelab

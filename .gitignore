@@ -2,3 +2,13 @@
 *.key
 *.crt
 cert.conf
+
+# Runtime, private audit material and release working copies are not source.
+*.dpapi
+*.db
+*.db-wal
+*.db-shm
+*.log
+__pycache__/
+.agents/artifacts/*
+# Reviewed durable records already tracked remain versioned. Add new ones explicitly.

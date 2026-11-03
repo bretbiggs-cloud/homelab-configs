@@ -1,0 +1,42 @@
+[
+  {
+    "name": "1337x",
+    "baseUrl": "https://1337x.to/",
+    "solverTag": "flaresolverr",
+    "priority": 25,
+    "appProfileId": 1,
+    "sonarrCore": false
+  },
+  {
+    "name": "EZTV",
+    "baseUrl": "https://eztvx.to/",
+    "solverTag": "flaresolverr",
+    "priority": 25,
+    "appProfileId": 1,
+    "sonarrCore": false
+  },
+  {
+    "name": "LimeTorrents",
+    "baseUrl": "https://www.limetorrents.fun/",
+    "solverTag": null,
+    "priority": 25,
+    "appProfileId": 1,
+    "sonarrCore": true
+  },
+  {
+    "name": "LinuxTracker",
+    "baseUrl": "https://linuxtracker.org/",
+    "solverTag": null,
+    "priority": 25,
+    "appProfileId": 1,
+    "sonarrCore": false
+  },
+  {
+    "name": "The Pirate Bay",
+    "baseUrl": "https://thepiratebay.org/",
+    "solverTag": null,
+    "priority": 25,
+    "appProfileId": 1,
+    "sonarrCore": true
+  }
+]

@@ -1,106 +1,72 @@
-# ==============================================================================
-# Stack: qBittorrent + PIA WireGuard VPN (qbittorrentvpn/compose.yml)
-#
-# Architecture:
-#   Decouples the WireGuard VPN client and BitTorrent client into two dedicated
-#   containers sharing a single network namespace:
-#     1. 'vpn' (thrnz/docker-wireguard-pia):
-#        Authenticates with Private Internet Access (PIA), provisions a native
-#        Linux kernel WireGuard interface (wg0), enforces an iptables kill
-#        switch, negotiates PIA NextGen dynamic port forwarding (refreshing the
-#        lease every 15 minutes), and executes '/set-qbt-port.sh <port>' to
-#        push the assigned port directly into qBittorrent's WebUI API.
-#     2. 'qbittorrent' (lscr.io/linuxserver/qbittorrent):
-#        Attaches to the WireGuard container's network stack via
-#        'network_mode: "service:vpn"' so all BitTorrent peer traffic is
-#        strictly routed through the WireGuard interface (wg0) while remaining
-#        reachable on the 'homelab' Docker bridge network at
-#        'http://qbittorrentvpn:8081'.
-#
-# Region Configuration:
-#   - Active region: 'ca_toronto' (supports PIA NextGen dynamic port forwarding).
-#   - Secondary regions (commented out below): 'ca_ontario', 'us_chicago', 'us_east'.
-#     Note: PIA disables port forwarding on all US regions; if switching to a
-#     US region, set PORT_FORWARDING: 0.
-# ==============================================================================
-
+# Synology replacement downloader. Existing qbittorrent remains independent.
 services:
   vpn:
-    image: thrnz/docker-wireguard-pia:latest
-    container_name: wireguard-pia
-    hostname: qbittorrentvpn
+    image: qmcgaw/gluetun@sha256:4af0c804003481e100180e1f8d4d5e9c48163fedc0f88d061881b615aef9d183
+    container_name: homelab-v2-vpn
+    hostname: homelab-v2-vpn
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
     sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv6.conf.default.disable_ipv6=1
-      - net.ipv6.conf.all.disable_ipv6=1
-      - net.ipv6.conf.lo.disable_ipv6=1
+      net.ipv6.conf.all.disable_ipv6: "1"
+    devices:
+      - /dev/net/tun:/dev/net/tun
     environment:
-      # Primary PIA WireGuard region (supports dynamic port forwarding, with ca_ontario fallback):
-      LOC: ca_ontario,ca_toronto,ca_montreal
-      # Secondary PIA WireGuard regions (if using a US region, set PORT_FORWARDING: 0):
-      # LOC: us_chicago
-      # LOC: us_east
-      USER: ${VPN_USER}
-      PASS: ${VPN_PASS}
-      # Permit WebUI traffic on port 8081 from all 192.168.0.0/16 subnets
-      # (covers LAN 192.168.0.0/24, WireGuard 192.168.1.128/25, and homelab 192.168.255.0/24)
-      LOCAL_NETWORK: 192.168.0.0/16
-      # Enable iptables kill switch (drops all traffic not routed through wg0 or LOCAL_NETWORK)
-      FIREWALL: 1
-      # Request a dynamic incoming TCP/UDP port from PIA NextGen port-forwarding API and rebind every 15m
-      PORT_FORWARDING: 1
-      # Exit container (triggering Docker restart/failover) if PIA port forwarding fails or drops
-      PORT_FATAL: 1
-      # Persist the PIA port-forwarding token in /pia/portsig.json to reuse the same port across restarts (~60d lease)
-      PORT_PERSIST: 1
-      # Callback script invoked as '/set-qbt-port.sh <port>' to sync the assigned port into qBittorrent
-      PORT_SCRIPT: /set-qbt-port.sh
-      VPNDNS: 1.1.1.1,1.0.0.1
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: openvpn
+      OPENVPN_PROTOCOL: udp
+      SERVER_COUNTRIES: United States
+      SERVER_HOSTNAMES: us13409.nordvpn.com
+      TZ: ${TZ:?See env.example for default.}
+      FIREWALL_INPUT_PORTS: "8082"
+      HTTP_CONTROL_SERVER_ADDRESS: 127.0.0.1:8000
     volumes:
-      - ${DOCKER_DATA_DIR:-/volume2/docker}/qbittorrentvpn/data/pia:/pia
-      - ${DOCKER_DATA_DIR:-/volume2/docker}/qbittorrentvpn/data/pia-shared:/pia-shared
-      - ${DOCKER_DATA_DIR:-/volume2/docker}/qbittorrentvpn/data/set-qbt-port.sh:/set-qbt-port.sh:ro
-    # WebUI (8081) is accessed over the 'homelab' bridge network by NPM, Radarr,
-    # Sonarr, and Homepage. Inbound BitTorrent peer traffic enters directly
-    # through the PIA WireGuard tunnel (wg0) on the dynamically assigned port.
-    # ports:
-    #   - 8081:8081
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/gluetun/data:/gluetun
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/gluetun/auth:/gluetun/auth:ro
+    ports:
+      - "${NAS_LAN_IP:?See env.example for default.}:8082:8082"
     networks:
-      homelab:
-        aliases:
-          - qbittorrentvpn
-
+      - homelab
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    secrets:
+      - openvpn_user
+      - openvpn_password
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrentvpn
+    image: lscr.io/linuxserver/qbittorrent@sha256:05c1454f9a32967affc1f34f67f8cc0cc57dd805dca45489fe797095a6286556
+    container_name: homelab-v2-qbittorrent
     restart: unless-stopped
-    network_mode: "service:vpn"
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PUID: ${PUID:?See env.example for default.}
+      PGID: ${PGID:?See env.example for default.}
+      TZ: ${TZ:?See env.example for default.}
+      WEBUI_PORT: "8082"
+      TORRENTING_PORT: "6881"
+    volumes:
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/qbittorrent/data/config:/config
+      - ${DOWNLOADS_DIR:?See env.example for default.}:/downloads
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    network_mode: service:vpn
     depends_on:
       vpn:
         condition: service_healthy
-    environment:
-      PUID: ${PUID:-1000}
-      PGID: ${PGID:-100}
-      TZ: ${TZ:-America/New_York}
-      WEBUI_PORT: 8081
-    volumes:
-      - ${DOCKER_DATA_DIR:-/volume2/docker}/qbittorrentvpn/data/config:/config
-      - ${DOCKER_DATA_DIR:-/volume2/docker}/qbittorrentvpn/data/incomplete:/incomplete
-      - ${MEDIA_DIR:-/volume1/media}:/media
-    labels:
-      - homepage.group=Downloads
-      - homepage.name=QBittorrentVPN
-      - homepage.icon=qbittorrent
-      - homepage.href=http://torrent.turing.home
-      - homepage.description=BitTorrent client routed through PIA WireGuard kill switch.
-      - homepage.widget.type=qbittorrent
-      - homepage.widget.url=http://qbittorrentvpn:8081
-      - homepage.widget.username=admin
-      - homepage.widget.password=${QBITTORRENT_PASSWORD}
-
 networks:
   homelab:
     external: true
+    name: homelab-v2-jellyfin_homelab
+secrets:
+  openvpn_user:
+    file: ${DOCKER_DATA_DIR:?See env.example for default.}/gluetun/secrets/openvpn_user
+  openvpn_password:
+    file: ${DOCKER_DATA_DIR:?See env.example for default.}/gluetun/secrets/openvpn_password

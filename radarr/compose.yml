@@ -1,0 +1,28 @@
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr@sha256:ade5937813c6ae415b29db729386e53fea3ecf067a019849bafbe2d2a6ec02ba
+    container_name: homelab-v2-radarr
+    hostname: homelab-v2-radarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PUID: ${PUID:?See env.example for default.}
+      PGID: ${PGID:?See env.example for default.}
+      TZ: ${TZ:?See env.example for default.}
+    volumes:
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/radarr/data:/config
+      - ${RADARR_SHARED_DATA_DIR:?See env.example for default.}:/downloads
+    ports:
+      - "${NAS_LAN_IP:?See env.example for default.}:7879:7878"
+    networks:
+      - homelab
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  homelab:
+    external: true
+    name: homelab-v2-jellyfin_homelab

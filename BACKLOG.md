@@ -1,3 +1,4 @@
+> The items below originated in the upstream UGREEN project and are not a live Synology task list. Current Synology follow-ups: finish Enhanced activation after playback, verify client UI, choose an independent backup destination/retention and restore-test it, and investigate optional browser-dependent indexers. SSD/volume migration and public ingress are not approved plans. See [.docs/synology.md](.docs/synology.md).
 # Project Backlog
 
 This backlog tracks pending architectural improvements, infrastructure tasks, and technical debt items for the homelab environment.

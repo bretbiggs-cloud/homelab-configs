@@ -1,0 +1,28 @@
+services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr@sha256:386c962ee6e260e3a5656b25df2ed056bcc9b6410e197d075f9547fd14c23bca
+    container_name: homelab-v2-sonarr
+    hostname: homelab-v2-sonarr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PUID: ${PUID:?See env.example for default.}
+      PGID: ${PGID:?See env.example for default.}
+      TZ: ${TZ:?See env.example for default.}
+    volumes:
+      - ${DOCKER_DATA_DIR:?See env.example for default.}/sonarr/data:/config
+      - ${SONARR_SHARED_DATA_DIR:?See env.example for default.}:/downloads
+    ports:
+      - "${NAS_LAN_IP:?See env.example for default.}:8990:8989"
+    networks:
+      - homelab
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  homelab:
+    external: true
+    name: homelab-v2-jellyfin_homelab

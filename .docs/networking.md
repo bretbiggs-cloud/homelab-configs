@@ -1,3 +1,5 @@
+> Historical upstream UGREEN reference, not live Synology facts. See [current Synology configuration](synology.md). Do not apply its host paths, systemd services, networks or automation to DSM.
+
 # Dual-Ingress Networking and Security Architecture
 
 This document specifies the dual-ingress topology, Docker subnets, IP assignments, split DNS routing, TLS certificate management, and edge security hardening for the homelab.
@@ -104,7 +106,7 @@ Eliminates browser security warnings across all internal services and the host N
 
 ### External Jellyfin Hardening
 * **Container Hardening**: Runs as non-root (`user: "1000:100"`), drops all capabilities (`cap_drop: [ALL]`), sets `security_opt: [no-new-privileges:true]`, and mounts media read-only (`:ro`).
-* **Reverse Proxy Endpoint Blocking**: The NPM proxy host config ([proxy_host/3.conf](file:///home/brandon/services/.configs/nginx/nginx/proxy_host/3.conf)) returns `HTTP 403 Forbidden` on `/swagger`, `/api-docs`, and `/metrics`.
+* **Reverse Proxy Endpoint Blocking**: The NPM proxy host configuration for `jellyfin.kamaka.tech` (`${DOCKER_DATA_DIR}/nginx/data/nginx/proxy_host/3.conf`) blocks sensitive endpoints via the Advanced configuration block, returning `HTTP 403 Forbidden` on `/swagger`, `/api-docs`, and `/metrics`.
 * **Cloudflare Video Cache Bypass**:
   1. Cloudflare Dashboard -> `kamaka.tech` -> **Caching -> Cache Rules -> Create Rule**.
   2. Rule Name: `Bypass Jellyfin Video Cache`.

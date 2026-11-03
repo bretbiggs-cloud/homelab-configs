@@ -1,0 +1,27 @@
+[
+  {
+    "Name": "/prowlarr",
+    "Id": "2a2f1797b11be609fdda681a67842a3473e2b5c5d5f6f18e110f17d2aea9e8c4",
+    "StartedAt": "2026-11-01T21:01:53.837612473Z"
+  },
+  {
+    "Name": "/sonarr",
+    "Id": "1dc9eee456d306e8cd7ec5d46b032e11cdb842160d105c2a1dd71712b5cfe27f",
+    "StartedAt": "2026-11-01T21:01:45.717865258Z"
+  },
+  {
+    "Name": "/radarr",
+    "Id": "eda92b0920606773c522a9ab33eb4caa99093330cb3414edcd5afef2e078f4c9",
+    "StartedAt": "2026-11-01T21:01:54.996846627Z"
+  },
+  {
+    "Name": "/seerr",
+    "Id": "0c7b549a471d5fe5d236625c8c1e6a1ee8907c66a83beac1c4eef223c1d3c06b",
+    "StartedAt": "2026-11-01T20:56:37.4731486Z"
+  },
+  {
+    "Name": "/qbittorrent",
+    "Id": "855da53f2c6d5769c8eb1056bd3b2e3781300160e05f8ae418dc8c5fa193777d",
+    "StartedAt": "2026-11-01T22:01:47.992738041Z"
+  }
+]
