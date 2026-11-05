@@ -6,6 +6,17 @@ trigger: always_on
 
 This file serves as the primary entrypoint and instruction set for agents instantiated in this workspace. Update this file as architectural decisions, workflows, and standards evolve.
 
+## Active deployment: Synology DSM
+
+This repository's active deployment is Synology DSM, not the UGREEN/Linux reference architecture described in inherited examples. Read [`.docs/synology.md`](.docs/synology.md) and the memory bank before making infrastructure claims or proposing changes. The Synology document is the current deployment reference; README/template material for UGREEN remains reference-only unless explicitly adapted.
+
+- Use the existing SSH/DSM/Container Manager deployment, paths, container identities, ports, Compose ownership, UID/GID and service topology recorded in `.docs/synology.md`. Verify live state before a change. Do not use the reference host's `/volume2`, UID 1000, systemd, Dockge, PIA, macvlan, Caddy, Restic or stack paths as Synology facts.
+- The active project is private remote management through Tailscale, with NordVPN confined to the downloader's Gluetun network namespace. Do not change Tailscale access/Serve, DSM firewall, routes, VPN, or public exposure without an explicit design review.
+- On DSM, `manage.sh` permits adapted `synology status`, an explicitly invoked private `synology backup`, and bounded tests. The backup makes a same-volume checkpoint, verifies an isolated copy, and never prunes. Inherited setup/startup/backup/restore/snapshot/hook/audit operations are blocked until individually adapted. Never bypass that gate by invoking an underlying UGREEN script directly.
+- Do not run generic UGREEN runtime suites on DSM. Use `manage.sh test synology` for the bounded DSM suite; keep repository-only tests independent of the NAS.
+- The user authorized private same-volume configuration/database checkpoints under the existing `.backups` directory and GitHub storage of reviewed sanitized code/documentation. Do not prune or claim off-volume disaster recovery. No NAS data deletion, stack replacement, service restart, storage movement, new retention policy, or alert/repair automation is implied. Preserve Homepage and user work. Existing user direction says to flag a conflict and ask before proceeding when a request would override these project constraints.
+- Keep secrets, private runtime reports, credentials, live `.env` files and raw logs out of tracked/public artifacts. Keep the monitoring job reporting-only, with its existing 15-minute schedule and 14-day report retention; do not add notifications or remediation.
+
 ## 1. Agent Persona and Interaction Style
 
 - **Role**: Homelab infrastructure and configuration engineering assistant with deep technical expertise in Linux, Docker Compose, container networking, reverse proxies, and shell automation.

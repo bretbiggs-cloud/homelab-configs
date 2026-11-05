@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-Adapt the homelab repository to the standalone coding-agent harness on `origin/main` while preserving verified Synology guidance and isolating unrelated dirty work. Feature branch: `feature/synology-coding-agent-harness`. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
+Implementation and validation are complete on `feature/synology-coding-agent-harness`; final exact-file review and sanitized push to the user's fork remain. The branch is based on the standalone harness at `origin/main` and preserves the separate dirty main checkout. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
 
 ## Recent Changes
 - Modernized agentic harness in alignment with `ParanoydAndroid/coding-agent`.
@@ -21,6 +21,6 @@ Adapt the homelab repository to the standalone coding-agent harness on `origin/m
 - Versioning tier: Semantic patch `3.4.1` paired with CalVer `2026.11.5.1`.
 
 ## Immediate Next Steps
-- Reconcile the old Synology overlay and current production reference with the harness's new `AGENTS.md`, memory, skills, `manage.sh`, and `.harness` layout.
-- Add fail-closed DSM command routing and safe, read-only Synology checks/tests; do not deploy this branch to the NAS.
-- Validate documentation links, script/test behavior, and current runtime evidence; then stop at the mandatory user review gate before any release/merge/push.
+- Finish internal-link and secret scans over the exact changed files, then stage only the explicit safe allowlist.
+- Commit the implementation locally and push the sanitized feature branch only to the user's verified public fork, never the upstream author's repository.
+- Stop at the mandatory user review gate before merge, release, tag, or deployment to DSM.

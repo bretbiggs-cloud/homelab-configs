@@ -1,6 +1,10 @@
 # System Patterns & Architecture Idioms
 
 ## Architectural Invariants
+- **Active platform**: This repository manages a Synology DSM deployment. The inherited UGREEN host model is reference-only. Read `.docs/synology.md` for the current deployment contract before host work.
+- **DSM command boundary**: `manage.sh` detects DSM and blocks inherited setup/startup/backup/restore/snapshot/audit/hook operations. Only bounded read-only Synology status and the adapted test suite are enabled on DSM.
+- **Remote access boundary**: Remote application access is through Tailscale. NordVPN is the downloader egress tunnel only; it does not provide user access to the NAS.
+- **Operations boundary**: Monitoring is reporting-only. User authorized private same-volume config/database checkpoints and sanitized configuration in GitHub; do not prune or claim off-volume recovery. No alerting, repair automation, storage/network/VPN change, or destructive cleanup is authorized.
 - **Dockge Compatibility**: Repository root contains only stack folders with `compose.yml` and an optional `.env`. Non-stack entities are hidden (`.` prefix). Root convenience symlinks (`AGENTS.md`, `manage.sh`, etc.) are permitted as Dockge indexes only directories. Dockge's own compose is deployed to `${DOCKGE_DIR}/compose.yml` above stacks.
 - **Network Exposure Model**: Backend services run on the user-defined `homelab` Docker bridge network (`192.168.255.0/24`). Reverse proxy (Caddy) bridges LAN (`external_npm` macvlan `192.168.0.0/24`, static IP `192.168.0.4`) and `homelab` bridge. Direct host ports are closed except for non-HTTP/emergency fallback.
 - **Secrets & Environment Variable Management**: Two-tier configuration model. Root `.env.example` syncs global host/network variables to stack `.env` files; per-stack `.env.example` defines secrets with blank defaults. Docker Compose enforces required variables with strict `${VAR:?Error message}` assertion syntax. Shell scripts use `${VAR}` parameter expansion.

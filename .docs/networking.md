@@ -2,6 +2,8 @@
 
 This document specifies the dual-ingress topology, Docker subnets, IP assignments, split DNS routing, TLS certificate management, edge security hardening, and alternative reverse proxy configurations for the homelab.
 
+> This inherited guide describes the reference host's Caddy, macvlan, and public ingress. The active deployment is Tailscale-only for remote access; use [the Synology deployment reference](synology.md) for current routing and exposure.
+
 ---
 
 ## 1. Dual-Ingress Architecture Overview

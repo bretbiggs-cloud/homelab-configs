@@ -2,6 +2,8 @@
 
 This catalog documents every containerized service, orchestrator, and host portal operating in the homelab environment.
 
+> This inherited catalog describes the UGREEN reference host, not the active DSM deployment. Use [the Synology deployment reference](synology.md) for current services, addresses, and ports.
+
 ---
 
 ## 1. Active Network Bindings & Port Reference

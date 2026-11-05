@@ -1,5 +1,7 @@
 # Project Progress & Milestones
 
+> The inherited milestones and 79-assertion UGREEN runtime validation below describe the reference project, not the active Synology deployment. For current DSM state and evidence, use `.docs/synology.md`.
+
 ## Completed Capabilities
 - [x] Baseline homelab infrastructure operational: 20 active container services managed via Dockge.
 - [x] Dual-homed Caddy reverse proxy on `external_npm` macvlan (`192.168.0.4`) with automated TLS (`*.kamaka.tech`).
@@ -31,3 +33,12 @@
 
 ## Known Issues / Backlog
 - None.
+
+## Synology Harness Adaptation
+- [x] Created isolated `feature/synology-coding-agent-harness` from updated `origin/main`; preserved dirty `main` and the older Synology worktree.
+- [x] Added the Synology project overlay, current deployment/environment references, and DSM-specific onboarding guidance.
+- [x] Added fail-closed DSM command routing, read-only status, and explicit private config/database backup with SQLite online snapshots and isolated restore integrity verification.
+- [x] Added the Synology test suite and regression fixtures for symlink, path traversal, and SQLite sidecar safeguards; focused suite passed 5/5 locally, with live DSM checks skipped on Windows.
+- [x] Created a private NAS checkpoint on November 5: 1,612 files, five SQLite databases, five isolated restore integrity checks passed. This is same-volume recovery material, not off-device disaster recovery.
+- [x] Confirmed the natural 10:30 Eastern monitoring run passed with zero warnings after updating the collector.
+- [ ] Exact-file secret/link audit, scoped local commit, and sanitized push to the user's fork; user review remains required before merge, release, tag, or deployment.

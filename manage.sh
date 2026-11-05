@@ -2,7 +2,8 @@
 # ==============================================================================
 # Script Name: manage.sh
 # Description:
-#   Central operational entrypoint for the UGREEN NAS homelab environment (nas.home).
+#   Central operational entrypoint for the homelab repository. Reference-host
+#   operations are disabled on Synology DSM unless explicitly adapted.
 #   Provides idempotent state convergence (setup), non-interactive boot startup,
 #   Restic snapshot backup and recovery, automated test orchestration, codebase
 #   security/drift auditing, and git hook management.
@@ -31,6 +32,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="${SCRIPT_DIR}"
+
+# Detect DSM before loading or dispatching any host-specific operation.
+# shellcheck source=.scripts/platform.sh
+source "${REPO_DIR}/.scripts/platform.sh"
 
 # Source modular libraries
 source "${REPO_DIR}/.scripts/common.sh"
@@ -246,6 +251,63 @@ cmd_test() {
 }
 
 # ------------------------------------------------------------------------------
+# Function: cmd_synology
+# Description:
+#   Runs bounded DSM status reporting or an explicitly requested private
+#   configuration/database checkpoint with isolated integrity verification.
+# Arguments:
+#   $1: Required subcommand; currently only `status` is supported.
+# Side Effects:
+#   `status` reads Docker/container, memory, filesystem, and RAID state.
+#   `backup` creates a private same-volume checkpoint and temporary restore copy;
+#   it does not stop services, modify live files, or prune older backups.
+# Return Codes:
+#   0 on a successful report; non-zero for unsupported commands or failed probes.
+# ------------------------------------------------------------------------------
+cmd_synology() {
+  local action="${1:-help}"
+  if ! is_synology_dsm; then
+    log_error "The Synology command is available only when running on DSM."
+    return 2
+  fi
+
+  case "${action}" in
+    status)
+      log_info "Read-only Synology status report"
+      printf '\nDocker containers (homelab-v2 and existing host services):\n'
+      docker ps -a --filter 'name=homelab-v2-' --filter 'name=homepage' \
+        --filter 'name=portainer' --filter 'name=omada-controller' \
+        --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+      printf '\nVolume capacity:\n'
+      df -h /volume1
+      printf '\nMemory availability:\n'
+      awk '/^MemTotal:|^MemAvailable:|^SwapTotal:|^SwapFree:/ { print }' /proc/meminfo
+      printf '\nRAID status:\n'
+      cat /proc/mdstat
+      ;;
+    backup)
+      if [[ "$#" -gt 1 ]]; then
+        log_error "Usage: ./manage.sh synology backup"
+        return 2
+      fi
+      local backup_script="${REPO_DIR}/.scripts/synology-backup-verify.py"
+      if [[ ! -r "${backup_script}" ]] || ! command -v python3 >/dev/null 2>&1; then
+        log_error "Synology backup script or python3 runtime is unavailable."
+        return 2
+      fi
+      exec python3 "${backup_script}"
+      ;;
+    help|-h|--help)
+      printf 'Usage: ./manage.sh synology <status|backup>\nstatus reports DSM state; backup creates a private checkpoint and verifies an isolated restore.\n'
+      ;;
+    *)
+      log_error "Unsupported Synology command: ${action}. Supported: status, backup, help."
+      return 2
+      ;;
+  esac
+}
+
+# ------------------------------------------------------------------------------
 # Function: cmd_audit
 # Description:
 #   Performs baseline drift, permissions, symlinks, and homelab runtime audits.
@@ -393,6 +455,24 @@ EOF
 #   Displays usage and subcommand guidance.
 # ------------------------------------------------------------------------------
 cmd_help() {
+  if is_synology_dsm; then
+    cat <<EOF
+${CLR_BOLD}Synology Homelab Management${CLR_RESET}
+
+${CLR_BOLD}Usage:${CLR_RESET}
+  ./manage.sh synology status
+  ./manage.sh synology backup
+  ./manage.sh test [synology|conventions]
+  ./manage.sh help
+
+Status and test commands are read-only. The explicit Synology backup creates a
+private same-volume configuration checkpoint and verifies an isolated restore.
+Inherited reference-host setup/startup/backup/restore commands are disabled.
+See .docs/synology.md for current deployment facts and operation boundaries.
+EOF
+    return 0
+  fi
+
   cat <<EOF
 ${CLR_BOLD}Homelab Management Entrypoint (manage.sh)${CLR_RESET}
 
@@ -436,6 +516,20 @@ EOF
 main() {
   local subcmd="${1:-help}"
   shift || true
+
+  # The upstream host workflows mutate OS, networks, storage, service state,
+  # backups, and Git. The guard runs before command-specific parsing or dispatch.
+  if guard_synology_command "${subcmd}"; then
+    :
+  else
+    return $?
+  fi
+  if is_synology_dsm; then
+    if [[ "${subcmd}" == "synology" ]]; then
+      cmd_synology "$@"
+      return $?
+    fi
+  fi
 
   # Subcommands with passthrough arguments
   if [[ "${subcmd}" == "test" ]]; then

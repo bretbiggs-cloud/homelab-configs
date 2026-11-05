@@ -1,12 +1,12 @@
 # Homelab Infrastructure and Configuration
 
-This repository defines the declarative Docker Compose service stacks, tracked application configurations, and automation scripts for the UGREEN NAS homelab environment (`nas.home`).
+This repository is adapted to manage a Synology DSM homelab. The current deployment, verified container names, ports, storage, Tailscale exposure, monitoring, and operation limits are documented in [the Synology deployment reference](.docs/synology.md).
 
-The repository is deployed at `${DOCKGE_STACKS_DIR}` (symlinked to `${HOME}/services`) so all stacks are simultaneously version-controlled in git and managed via [Dockge](https://dockge.kuma.pet/). Persistent container state resides on high-IOPS NVMe storage (`/volume2/docker`), while bulk media libraries reside on mechanical RAID 5 storage (`/volume1/media`).
+The remaining architecture and provisioning material in this README is inherited reference-host guidance. Its UGREEN, Dockge, Caddy, PIA, `/volume2`, systemd, Restic, and public-ingress examples do not describe the active Synology deployment and must not be run on DSM without a reviewed adaptation.
 
 ---
 
-## 1. Architecture and Network Topology
+## 1. Reference Architecture and Network Topology (not the active DSM deployment)
 
 Traffic ingress and egress follow three segmented paths across physical LAN, Tailscale mesh, and Docker bridge networks:
 
@@ -101,7 +101,7 @@ The homelab is organized into 7 domain-aligned stacks plus Dockge:
 
 ---
 
-## 3. Quickstart
+## 3. Reference-Host Quickstart (not for the active DSM deployment)
 
 ### 3.1 Provisioning a New Host
 
@@ -134,18 +134,15 @@ sudo ./manage.sh setup
 
 ## 4. Automation CLI (`manage.sh`)
 
-`manage.sh` is an idempotent management script synchronizing repository definitions with live host state:
+On DSM, use only the adapted Synology commands below. The generic commands in the upstream reference environment are blocked by the DSM platform guard.
 
 | Subcommand | Description |
 | :--- | :--- |
-| `sudo ./manage.sh setup` | End-to-end host convergence: applies OS fixes, syncs `.env` files, provisions networks, deploys Dockge compose, normalizes permissions, and starts all stacks. |
-| `./manage.sh startup` | Non-interactive boot hook designed for systemd execution on host startup. |
-| `sudo ./manage.sh backup [-t <type|name>] [-m <msg>]` | Stages zero-downtime DB dumps, snapshots volumes with Restic, commits git changes, applies SemVer/CalVer tags, pushes to remote, and archives `.env` secrets. |
-| `./manage.sh snapshots` | Lists historical Restic backup snapshots with timestamps, snapshot IDs, and repository sizes. |
-| `sudo ./manage.sh restore [snap] [svc]` | Restores full volume state or an individual service from a Restic snapshot with pre-restore safety checks. |
-| `./manage.sh test [suite]` | Modular smoke, regression, and conventions test suite verifying containers, direct admin ports, routing, interconnects, security, and harness conventions. |
-| `./manage.sh audit` | Continuous drift, permission, broken symlink, and environment security auditing. |
-| `./manage.sh hook [install|uninstall]` | Git hooks protecting the `main` branch during commits and pushes while leaving feature branches unconstrained. |
+| `./manage.sh synology status` | Read-only report of DSM container state, volume capacity, memory, and RAID status. |
+| `./manage.sh synology backup` | Create a private same-volume application configuration/database checkpoint and verify an isolated restore. |
+| `./manage.sh test synology` | Bounded Synology repository and runtime checks; live container checks run only on DSM. |
+| `./manage.sh test conventions` | Repository-only harness and structure checks. |
+| `./manage.sh help` | Show available commands. |
 
 ---
 
@@ -154,6 +151,8 @@ sudo ./manage.sh setup
 Detailed architectural specifications, configuration runbooks, and references are organized under `.docs/`:
 
 * **[Project Organization & Architecture](.docs/project-organization.md)**: Filesystem layout, Dockge compatibility constraints, storage tiering rationale, and the Restic backup model.
+* **[Synology Deployment Reference](.docs/synology.md)**: Current DSM deployment facts, service access, management boundaries, monitoring, and backup status.
+* **[Synology Environment Reference](.docs/synology-env.md)**: Safe template values for active Synology Compose inputs; live secrets are excluded.
 * **[Service Catalog and Port Reference](.docs/service-catalog.md)**: Catalog entries for containerized services and the host OS portal, active port bindings, internal/external addresses, volume mappings, and dependencies.
 * **[Post-Setup Optimization, Ergonomics & Maintenance Guide](.docs/performance-optimization.md)**: Recommended post-setup runbook covering storage anti-thrashing, TLS certificates, DNS resolution, and atomic media hardlinks.
 * **[Environment Variable Reference & Cheat Sheet](.docs/env-reference.md)**: Central dictionary of global and per-stack environment variables, defaults, and secrets.

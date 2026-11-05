@@ -2,6 +2,8 @@
 
 This document provides operational runbooks, automation procedures, host systemd service definitions, and appliance-level engineering documentation for the homelab environment.
 
+> This inherited runbook describes the reference Linux/UGREEN host. On the active Synology deployment, use [the Synology deployment reference](synology.md); `manage.sh` blocks these unadapted host operations on DSM.
+
 ---
 
 ## 1. Automation CLI Reference (`manage.sh`)

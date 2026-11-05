@@ -2,6 +2,8 @@
 
 This document serves as the central dictionary and reference guide for every environment variable used across the homelab infrastructure.
 
+> This inherited reference covers upstream stacks and host defaults. For active Synology template inputs use [synology-env.md](synology-env.md); live `.env` files and secrets remain private.
+
 Configuration follows a two-tier model with explicit runtime assertions:
 1. **Global Root Variables ([`.env.example`](../.env.example))**: Define host paths, network interfaces, runtime IDs, and timezone. Automatically propagated into child stack `.env` files by `./manage.sh setup`.
 2. **Per-Stack Variables & Secrets ([`<stack>/.env.example`](../))**: Define application secrets, credentials, and API keys.

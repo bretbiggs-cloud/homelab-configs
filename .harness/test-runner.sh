@@ -20,6 +20,8 @@ REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # Source the test harness library
 # shellcheck source=.harness/lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=.scripts/platform.sh
+source "${REPO_DIR}/.scripts/platform.sh"
 
 # Source all test suites
 # shellcheck source=.harness/suites/test_conventions.sh
@@ -36,20 +38,40 @@ source "${SCRIPT_DIR}/suites/test_interconnect.sh"
 source "${SCRIPT_DIR}/suites/test_negative_security.sh"
 # shellcheck source=.harness/suites/test_backup.sh
 source "${SCRIPT_DIR}/suites/test_backup.sh"
+# shellcheck source=.harness/suites/test_synology.sh
+source "${SCRIPT_DIR}/suites/test_synology.sh"
 
 main() {
   local target="${1:-all}"
   SUITE_START_TIME="$(date +%s)"
 
+  # On DSM, the generic suites assume reference-host services and storage.
+  # Limit the all-target to repository conventions plus the DSM-safe suite.
+  if is_synology_dsm; then
+    case "${target}" in
+      all|""|synology|dsm|conventions|harness|help|-h|--help) ;;
+      *)
+        printf "%bError:%b Suite '%s' is not enabled on Synology DSM; use 'all', 'conventions', or 'synology'.\n" "${CLR_RED}" "${CLR_RESET}" "${target}" >&2
+        exit 2
+        ;;
+    esac
+  fi
+
   case "${target}" in
     all|"")
-      suite_conventions
-      suite_containers
-      suite_direct_admin
-      suite_routing
-      suite_interconnect
-      suite_negative_security
-      suite_backup
+      if is_synology_dsm; then
+        suite_conventions
+        suite_synology
+      else
+        suite_conventions
+        suite_synology
+        suite_containers
+        suite_direct_admin
+        suite_routing
+        suite_interconnect
+        suite_negative_security
+        suite_backup
+      fi
       ;;
     conventions|harness)
       suite_conventions
@@ -71,6 +93,9 @@ main() {
       ;;
     backup|restic)
       suite_backup
+      ;;
+    synology|dsm)
+      suite_synology
       ;;
     test_*)
       init_suite "Single Test Execution"
@@ -94,6 +119,7 @@ Targets:
   interconnect    Run inter-container DNS, socket, and VPN sync checks
   security        Run negative isolation, hardening, and auth checks
   backup          Run restic backup and automation checks
+  synology        Run repository-safe checks and read-only DSM checks when on DSM
   test_<name>     Run a single test function directly
 EOF
       exit 0

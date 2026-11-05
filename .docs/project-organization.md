@@ -2,6 +2,8 @@
 
 This document details the filesystem layout, container orchestrator design, storage tiering, and declarative configuration management model for the homelab repository.
 
+> This document describes the inherited reference-host model. The active Synology paths and single-volume layout are in [the Synology deployment reference](synology.md).
+
 ---
 
 ## 1. Repository Directory Structure

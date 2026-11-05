@@ -13,6 +13,7 @@ All tests are orchestrated via `./manage.sh test [suite]` and live under `.harne
 | `test_interconnect.sh` | Tests internal service-to-service DNS resolution, database sockets (`postgres:5432`), internal API endpoints, and Tailscale exit routing. |
 | `test_negative_security.sh` | Tests that sensitive administrative paths (`/swagger`, `/api-docs`, `/metrics`) are blocked (HTTP 403) on external endpoints (`*.kamaka.tech`). |
 | `test_backup.sh` | Tests Restic repository snapshot accessibility, lock release, and integrity check. |
+| `test_synology.sh` | Validates the DSM command guard, current Synology docs, monitoring script syntax, and private backup/restore helper safeguards; live container checks run only on DSM. |
 
 ---
 

@@ -19,6 +19,7 @@ This skill guides an agent and homelab developer through instantiating, customiz
 ## Prerequisites
 - Working directory is the repository root (`/opt/<user>/dockge/stacks` or local clone).
 - Docker and Docker Compose v2+ installed on host.
+- For an existing Synology deployment, read [the current Synology reference](../../../.docs/synology.md) and the root `AGENTS.md` overlay first. Treat the remaining reference-host steps below as examples; do not execute UGREEN setup or host mutation routines on DSM.
 - Reference supporting guides:
   - [Service Selection Matrix](./references/service-matrix.md)
   - [Hardware & Platform Adaptations](./references/hardware-platforms.md)
@@ -67,6 +68,8 @@ Classify all services into:
 ---
 
 ### Step 3: Hardware, Platform & Provider Discovery
+
+For an existing Synology, reconcile the current deployed configuration before applying any generic choice below. Do not assume the new-host setup commands, volume layout, Docker data root, or system services apply. A platform-specific plan must state which checks are read-only and must not deploy or restart services without explicit user authorization.
 
 #### 1. Hardware & Storage Topology Discovery
 Inspect host block devices, storage mounts, and memory:
