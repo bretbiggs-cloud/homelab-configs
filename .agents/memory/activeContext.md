@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-Stand by for new feature requests, diagnostics, or operational tasks. Agentic harness modernization and alignment complete.
+Adapt the homelab repository to the standalone coding-agent harness on `origin/main` while preserving verified Synology guidance and isolating unrelated dirty work. Feature branch: `feature/synology-coding-agent-harness`. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
 
 ## Recent Changes
 - Modernized agentic harness in alignment with `ParanoydAndroid/coding-agent`.
@@ -21,4 +21,6 @@ Stand by for new feature requests, diagnostics, or operational tasks. Agentic ha
 - Versioning tier: Semantic patch `3.4.1` paired with CalVer `2026.11.5.1`.
 
 ## Immediate Next Steps
-- Stand by for user instructions or next feature initiation.
+- Reconcile the old Synology overlay and current production reference with the harness's new `AGENTS.md`, memory, skills, `manage.sh`, and `.harness` layout.
+- Add fail-closed DSM command routing and safe, read-only Synology checks/tests; do not deploy this branch to the NAS.
+- Validate documentation links, script/test behavior, and current runtime evidence; then stop at the mandatory user review gate before any release/merge/push.
