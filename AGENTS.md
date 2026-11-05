@@ -47,7 +47,7 @@ This repository's active deployment is Synology DSM, not the UGREEN/Linux refere
 When newly instantiated against this repository, orient yourself using the following sources of truth in order:
 
 1. **`README.md`**: The authoritative reference for the homelab network topology, subnets, static IP and DNS assignments, firewall rules, reverse proxy (Caddy) behavior, and service port mappings.
-2. **`AGENTS.md` / `agent.md` (`.agents/rules/project-conventions.md`)**: Canonical behavioral instructions, engineering standards, and coding conventions. The root symlink ensures universal compatibility across multi-agent tooling.
+2. **Agent instructions**: `AGENTS.md` is canonical. `agent.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, and `.agents/rules/project-conventions.md` are tracked full-file copies so agent entrypoints work on Windows/SMB checkouts that cannot materialize Git symlinks. After changing `AGENTS.md`, run `bash .scripts/sync-agent-entrypoints.sh` to refresh the copies.
 3. **`.agents/memory/`**: Persistent session memory bank (`activeContext.md`, `systemPatterns.md`, `progress.md`) maintaining task focus, architectural quirks, and milestones across session boundaries and context compactions.
 4. **`.agents/rules/`**: Glob-scoped language and manifest conventions (`containers-and-env.md` for `*compose*.yml` and `.env*`, `shell-scripting.md` for `*.sh`).
 5. **`.agents/artifacts/`**: Versioned directory for architecture specifications, design documents, and technical audits (see [`.agents/artifacts/architecture.md`](.agents/artifacts/architecture.md)). Read existing artifacts before proposing or executing work.
@@ -61,7 +61,7 @@ When interacting with a user on a freshly cloned repository, or when establishin
 
 - **Dockge Compatibility**:
   - Strictly preserve the Dockge-compatible directory structure at the repository root: one directory per stack containing `compose.yml` and an optional `.env` file.
-  - Do not clutter the repository root with non-stack folders that would be misidentified by Dockge as stacks. Keep agent metadata and project artifacts inside `.agents/` and tracked service/orchestrator configuration files inside `.configs/<service>/`. Root-level convenience symlinks (`agent.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.skills`) are permitted as Dockge indexes only directory structures.
+  - Do not clutter the repository root with non-stack folders that would be misidentified by Dockge as stacks. Keep agent metadata and project artifacts inside `.agents/` and tracked service/orchestrator configuration files inside `.configs/<service>/`. Root-level agent instruction copies and the hidden `.skills/` mirror are tracked regular files/directories; avoid symlinks because Windows/SMB clients may check them out as inert target text.
   - Store Dockge's own `compose.yml` in `.configs/dockge/compose.yml` and deploy it to `${DOCKGE_DIR}/compose.yml` (one level above `stacks/`) so Dockge does not list or restart itself as a self-managed stack.
 - **Declarative and Idempotent Automation**:
   - Favor declarative configuration over imperative state manipulation across all manifests, infrastructure, and workflows.
@@ -144,7 +144,7 @@ When interacting with a user on a freshly cloned repository, or when establishin
 
 ## 6. On-Demand Skills and Operational Playbooks
 
-Procedural workflows, multi-step runbooks, and diagnostic algorithms are modularized as on-demand skills under `.agents/skills/<name>/SKILL.md` (and accessible via `.skills/<name>/SKILL.md`). In accordance with progressive disclosure, consult and execute the appropriate skill when performing operational tasks:
+Procedural workflows, multi-step runbooks, and diagnostic algorithms are modularized as on-demand skills under `.agents/skills/<name>/SKILL.md` (also available in the generated `.skills/<name>/SKILL.md` copy). In accordance with progressive disclosure, consult and execute the appropriate skill when performing operational tasks. Add or edit skills only under `.agents/skills/`, then run `bash .scripts/sync-agent-entrypoints.sh` to refresh portable copies; the conventions suite verifies that they match:
 
 - **Homelab Onboarding & Direction Setting**: Execute the interactive orientation, service selection matrix, hardware/provider adaptation, and initial scaffolding runbook in [`start-homelab`](.agents/skills/start-homelab/SKILL.md).
 - **Feature Initiation & Design Review**: Follow the mainline sync, branch checkout (`feature/<name>`), architectural plan drafting, opinionated "grill-me" critique cycle, and plan commit procedure in [`feature-initiation`](.agents/skills/feature-initiation/SKILL.md).

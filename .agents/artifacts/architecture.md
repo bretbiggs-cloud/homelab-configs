@@ -15,7 +15,7 @@ The project encompasses:
 
 ### 2.1 Coalesced Git-Centric Configuration with Dockge Compatibility
 - **Unified Repository and Orchestrator Directory**: The repository is checked out directly at `/opt/${USER}/dockge/stacks` (and symlinked to `${HOME}/services`). Every non-hidden directory at the repository root is a self-contained Docker Compose stack (`<stack>/compose.yml` + `<stack>/.env`) that can be managed either via the `manage.sh` CLI or interactively through the Dockge Web UI.
-- **Strict Root Directory Hygiene**: Non-stack directories are kept hidden (`.configs/`, `.agents/`, `.harness/`, `.scripts/`, `.github/`) so Dockge never misidentifies documentation, agent metadata, test harnesses, or raw config files as runnable Compose stacks. Root convenience symlinks (`agent.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.skills`) are ignored by Dockge's directory scanner.
+- **Strict Root Directory Hygiene**: Non-stack directories are kept hidden (`.configs/`, `.agents/`, `.harness/`, `.scripts/`, `.github/`, `.skills/`) so Dockge never misidentifies documentation, agent metadata, test harnesses, or raw config files as runnable Compose stacks. Agent entrypoints are tracked copies of `AGENTS.md` to work on Windows/SMB checkouts without symlink support.
 - **Externalized Orchestrator Stack**: Dockge's own `compose.yml` is tracked in `.configs/dockge/compose.yml` and deployed one level above the stacks directory (`${DOCKGE_DIR}/compose.yml`) so Dockge does not list or restart itself as a child stack.
 
 ### 2.2 Declarative Convergence and Idempotency
@@ -62,12 +62,12 @@ The project encompasses:
 │       └── homelab-startup.service
 ├── .env.example
 ├── .gitignore
-├── .skills -> .agents/skills
+├── .skills/                       # Portable copy of .agents/skills
 ├── AGENTS.md
-├── agent.md -> AGENTS.md
-├── CLAUDE.md -> AGENTS.md
-├── GEMINI.md -> AGENTS.md
-├── .cursorrules -> AGENTS.md
+├── agent.md                       # Full AGENTS.md copy
+├── CLAUDE.md                      # Full AGENTS.md copy
+├── GEMINI.md                      # Full AGENTS.md copy
+├── .cursorrules                   # Full AGENTS.md copy
 ├── CHANGELOG.md
 ├── BACKLOG.md
 ├── README.md

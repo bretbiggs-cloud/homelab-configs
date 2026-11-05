@@ -13,7 +13,7 @@
   - [x] Session memory bank established (`.agents/memory/`).
   - [x] Invocable subagents authored (`.agents/subagents/`).
   - [x] Modular scoped rules authored (`.agents/rules/`).
-  - [x] Canonical root `AGENTS.md` and ecosystem symlinks converged.
+  - [x] Canonical root `AGENTS.md` and portable agent instruction copies converged.
   - [x] Test harness migrated to `.harness/` with new `conventions` suite.
   - [x] Unified `manage.sh` master entrypoint implemented.
   - [x] GitHub Actions CI workflow authored (`.github/workflows/ci.yml`).
@@ -43,6 +43,11 @@
 - [x] Confirmed the natural 10:30 Eastern monitoring run passed with zero warnings after updating the collector.
 - [x] Exact-file publication review: 25 staged files, no `.env`, zero secret-pattern hits, and all 66 internal links resolved. The generated Python cache was excluded.
 - [x] Scoped local implementation commit `f0c1adc` on `feature/synology-coding-agent-harness`.
-- [x] Rechecked local Synology suite on November 5: 5/5 passed, with live DSM container inspection skipped on Windows. Conventions suite was 8/10; both failures are the four ecosystem alias checks that require symlink materialization, while this Windows SMB checkout has `core.symlinks=false` and represents the Git mode-120000 entries as target-text files. Linux/DSM checkout behavior remains unverified in this run.
-- [ ] Push to the verified user fork is pending GitHub OAuth reauthorization: the current credential lacks `workflow` scope required for the inherited CI workflow. No remote branch was created by the rejected push. The local SSH key fallback was rejected by GitHub after its published host key was verified.
+- [x] Replaced symlink entrypoints with tracked full-file copies and a generated `.skills/` mirror; the Windows conventions suite passed 10/10.
+- [x] Integrated the authenticated app-health helper and five regression fixtures from the canonical monitoring work, preserving exact source-file bytes.
+- [x] Focused recheck after portable-copy and monitoring integration: conventions 11/11; Synology suite 7/7, including five authenticated app-health unit fixtures. Live DSM container inspection was skipped on Windows.
+- [x] Updated the Synology reference to the latest scheduled monitor report: DSM recovered, Radarr/Sonarr clear, and Prowlarr `IndexerProxyStatusCheck` remains unresolved.
+- [x] Exact staged review: 39 files, no `.env`, no secret-pattern hits, six documentation files checked with zero broken local links, copied monitoring sources hash-identical, and `git diff --cached --check` clean. Generated Python cache was excluded.
+- [ ] Commit the scoped portable-entrypoint and monitoring integration changes locally.
+- [ ] GitHub publication remains pending external device/OAuth authorization; no remote branch was created and this worktree will not retry the blocked push.
 - [ ] User review remains required before merge, release, tag, or deployment.

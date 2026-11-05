@@ -12,16 +12,38 @@ test_conventions_entrypoint() {
   [[ -s "${REPO_DIR}/AGENTS.md" ]]
 }
 
-test_skills_symlink() {
-  [[ -L "${REPO_DIR}/.skills" ]] && [[ -d "${REPO_DIR}/.skills" ]]
+test_skills_portable_copy() {
+  local source="${REPO_DIR}/.agents/skills"
+  local copy="${REPO_DIR}/.skills"
+  local source_count copy_count source_file relative_path
+  [[ -d "${source}" && -d "${copy}" && ! -L "${copy}" ]] || return 1
+
+  source_count="$(find "${source}" -type f | wc -l | tr -d '[:space:]')"
+  copy_count="$(find "${copy}" -type f | wc -l | tr -d '[:space:]')"
+  [[ "${source_count}" == "${copy_count}" ]] || return 1
+
+  while IFS= read -r -d '' source_file; do
+    relative_path="${source_file#"${source}/"}"
+    cmp -s "${source_file}" "${copy}/${relative_path}" || return 1
+  done < <(find "${source}" -type f -print0)
 }
 
-test_ecosystem_symlinks() {
-  [[ -L "${REPO_DIR}/CLAUDE.md" && -e "${REPO_DIR}/CLAUDE.md" ]] && \
-  [[ -L "${REPO_DIR}/GEMINI.md" && -e "${REPO_DIR}/GEMINI.md" ]] && \
-  [[ -L "${REPO_DIR}/.cursorrules" && -e "${REPO_DIR}/.cursorrules" ]] && \
-  [[ -L "${REPO_DIR}/agent.md" && -e "${REPO_DIR}/agent.md" ]] && \
-  [[ -L "${REPO_DIR}/.agents/rules/project-conventions.md" && -e "${REPO_DIR}/.agents/rules/project-conventions.md" ]]
+test_agent_instruction_copies() {
+  local relative_path
+  for relative_path in agent.md CLAUDE.md GEMINI.md .cursorrules; do
+    [[ -f "${REPO_DIR}/${relative_path}" && ! -L "${REPO_DIR}/${relative_path}" ]] || return 1
+    cmp -s "${REPO_DIR}/AGENTS.md" "${REPO_DIR}/${relative_path}" || return 1
+  done
+
+  relative_path=".agents/rules/project-conventions.md"
+  [[ -f "${REPO_DIR}/${relative_path}" && ! -L "${REPO_DIR}/${relative_path}" ]] || return 1
+  cmp -s <(sed -E 's#\]\((\.agents/|\.docs/|\.skills/)#](../../\1#g' "${REPO_DIR}/AGENTS.md") \
+    "${REPO_DIR}/${relative_path}"
+}
+
+test_agent_copy_sync_script() {
+  [[ -s "${REPO_DIR}/.scripts/sync-agent-entrypoints.sh" ]] && \
+    bash -n "${REPO_DIR}/.scripts/sync-agent-entrypoints.sh"
 }
 
 test_manage_executable() {
@@ -59,8 +81,9 @@ test_ci_workflow_presence() {
 suite_conventions() {
   init_suite "Agentic Harness & Structural Invariants"
   run_test test_conventions_entrypoint "Canonical AGENTS.md entrypoint exists"
-  run_test test_skills_symlink ".skills convenience symlink is available and resolves"
-  run_test test_ecosystem_symlinks "Multi-agent ecosystem symlinks (agent.md, CLAUDE.md, GEMINI.md, .cursorrules) resolve"
+  run_test test_skills_portable_copy ".skills portable copy matches canonical .agents/skills"
+  run_test test_agent_instruction_copies "Agent entrypoint files contain the canonical full instructions"
+  run_test test_agent_copy_sync_script "Portable agent-copy synchronization script exists and parses"
   run_test test_manage_executable "manage.sh master entrypoint is executable"
   run_test test_env_example_presence "Root .env.example configuration template exists"
   run_test test_gitignore_secrets ".gitignore properly protects .env credentials"

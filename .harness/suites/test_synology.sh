@@ -53,7 +53,19 @@ test_synology_backup_script_syntax() {
 test_synology_backup_regressions() {
   local python_bin
   python_bin="$(synology_test_python)" || return 1
-  "${python_bin}" "${REPO_DIR}/.harness/suites/test_synology_backup.py"
+  PYTHONDONTWRITEBYTECODE=1 "${python_bin}" "${REPO_DIR}/.harness/suites/test_synology_backup.py"
+}
+
+test_synology_app_health_syntax() {
+  local python_bin
+  python_bin="$(synology_test_python)" || return 1
+  PYTHONDONTWRITEBYTECODE=1 "${python_bin}" -c 'from pathlib import Path; [compile(Path(path).read_text(), path, "exec") for path in (".scripts/synology-app-health.py", ".scripts/test-synology-app-health.py")]'
+}
+
+test_synology_app_health_regressions() {
+  local python_bin
+  python_bin="$(synology_test_python)" || return 1
+  PYTHONDONTWRITEBYTECODE=1 "${python_bin}" "${REPO_DIR}/.scripts/test-synology-app-health.py"
 }
 
 synology_test_python() {
@@ -88,6 +100,8 @@ suite_synology() {
   run_test test_synology_monitor_syntax "NAS monitoring scripts pass shell syntax checks"
   run_test test_synology_backup_script_syntax "Synology backup helper parses without executing"
   run_test test_synology_backup_regressions "Backup symlink, path traversal, and SQLite-sidecar fixtures pass"
+  run_test test_synology_app_health_syntax "Authenticated application health helper and tests parse without contacting services"
+  run_test test_synology_app_health_regressions "Authenticated application health warning and failure fixtures pass"
   if is_synology_dsm; then
     run_test test_synology_live_containers "Active homelab-v2 containers are running without OOM state"
   else

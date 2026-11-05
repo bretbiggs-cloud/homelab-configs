@@ -165,7 +165,7 @@ Detailed architectural specifications, configuration runbooks, and references ar
 
 ## 6. Agent Skills & Operational Runbooks
 
-Procedural workflows, interactive scaffolding, and diagnostic algorithms are modularized as on-demand skills under `.skills/` (mirrored in `.agents/skills/`):
+Procedural workflows, interactive scaffolding, and diagnostic algorithms are modularized under canonical `.agents/skills/`. The tracked `.skills/` directory is a generated portable copy for tools that discover that path; refresh it with `bash .scripts/sync-agent-entrypoints.sh` after changing agent instructions or skills:
 
 | Skill Name | Purpose & Operational Scope |
 | :--- | :--- |

@@ -47,12 +47,12 @@ The repository root is deployed at `${DOCKGE_STACKS_DIR}` (typically `/opt/${USE
 │   ├── rules/                     # Scoped rules (containers-and-env.md, shell-scripting.md)
 │   ├── skills/                    # Operational runbooks (start-homelab, stack-lifecycle, etc.)
 │   └── artifacts/                 # Versioned design plans and architecture specifications
-├── .skills -> .agents/skills      # Convenience symlink for agent workflow skills
+├── .skills/                       # Portable tracked copy of .agents/skills (refresh with sync script)
 ├── AGENTS.md                      # Canonical root agent instructions
-├── agent.md -> AGENTS.md          # Multi-agent ecosystem symlink
-├── CLAUDE.md -> AGENTS.md         # Multi-agent ecosystem symlink
-├── GEMINI.md -> AGENTS.md         # Multi-agent ecosystem symlink
-├── .cursorrules -> AGENTS.md      # Multi-agent ecosystem symlink
+├── agent.md                       # Full copy of AGENTS.md for compatible agents
+├── CLAUDE.md                      # Full copy of AGENTS.md for Claude Code
+├── GEMINI.md                      # Full copy of AGENTS.md for Gemini CLI
+├── .cursorrules                   # Full copy of AGENTS.md for Cursor
 ├── manage.sh                      # Primary CLI orchestration entrypoint
 ├── CHANGELOG.md                   # Semantic & CalVer release history
 ├── BACKLOG.md                     # Project technical debt and improvement backlog

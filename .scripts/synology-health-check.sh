@@ -61,6 +61,14 @@ done
 code=$(curl --noproxy '*' -k --connect-timeout 3 --max-time 10 -s -o /dev/null -w '%{http_code}' https://192.168.1.220:8043/) || code=000
 printf 'HTTP omada %s (certificate not validated)\n' "$code"
 case "$code" in 200|301|302|303|307|308|401) :;; *) warn 'omada HTTP probe failed';; esac
+# Include authenticated application health: HTTP reachability alone misses
+# indexer outages and other app warnings. The helper never emits API keys.
+APP_HEALTH='/volume1/homes/bret/HomeLab/NAS Configuration/.scripts/synology-app-health.py'
+if command -v python3 >/dev/null 2>&1 && [ -r "$APP_HEALTH" ]; then
+  python3 "$APP_HEALTH" || warn 'application health warning or unavailable evidence'
+else
+  warn 'application health helper or python3 unavailable'
+fi
 printf 'Warnings=%s\n' "$warnings"
 echo 'HTTP login/redirect is reachability, not end-to-end integration. SMART, backup recovery and VPN leak protection are not tested.'
 [ "$warnings" -eq 0 ]
