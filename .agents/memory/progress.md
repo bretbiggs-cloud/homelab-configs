@@ -49,5 +49,5 @@
 - [x] Updated the Synology reference to the latest scheduled monitor report: DSM recovered, Radarr/Sonarr clear, and Prowlarr `IndexerProxyStatusCheck` remains unresolved.
 - [x] Exact staged review: 39 files, no `.env`, no secret-pattern hits, six documentation files checked with zero broken local links, copied monitoring sources hash-identical, and `git diff --cached --check` clean. Generated Python cache was excluded.
 - [ ] Commit the scoped portable-entrypoint and monitoring integration changes locally.
-- [ ] GitHub publication remains pending external device/OAuth authorization; no remote branch was created and this worktree will not retry the blocked push.
+- [x] GitHub branch backup published to bretbiggs-cloud/homelab-configs on 2026-11-05. Remote feature/synology-coding-agent-harness matched reviewed commit 50bb805 before this status update. A command-scoped Git Credential Manager selection used the newly authorized workflow scope; no global helper changes or credentials were published.
 - [ ] User review remains required before merge, release, tag, or deployment.

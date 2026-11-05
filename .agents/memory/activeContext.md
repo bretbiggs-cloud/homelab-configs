@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-The repository adaptation is implemented on `feature/synology-coding-agent-harness`, based on standalone harness `origin/main`, while preserving the separate dirty main checkout. Portable Windows/SMB agent copies and the authenticated app-health helper are integrated. Focused tests pass. The latest scheduled monitor run completed in 9 seconds with a remaining Prowlarr `IndexerProxyStatusCheck` error; Radarr/Sonarr are clear. GitHub publication remains pending authorization; no retry is requested. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
+The repository adaptation is implemented on `feature/synology-coding-agent-harness`, based on standalone harness `origin/main`, while preserving the separate dirty main checkout. Portable Windows/SMB agent copies and the authenticated app-health helper are integrated. Focused tests pass. The latest scheduled monitor run completed in 9 seconds with a remaining Prowlarr `IndexerProxyStatusCheck` error; Radarr/Sonarr are clear. The reviewed branch was published to the user fork on 2026-11-05; remote commit 50bb805 was verified before this status update. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
 
 ## Recent Changes
 - Modernized agentic harness in alignment with `ParanoydAndroid/coding-agent`.
@@ -21,7 +21,7 @@ The repository adaptation is implemented on `feature/synology-coding-agent-harne
 - Versioning tier: Semantic patch `3.4.1` paired with CalVer `2026.11.5.1`.
 
 ## Immediate Next Steps
-- Do not retry GitHub publication while device/OAuth authorization is pending outside this worktree.
+- GitHub authorization is complete. Git Credential Manager has repo/workflow scope; the default GitHub helper still selects an older token. Use a per-command GitHub helper reset followed by manager for reviewed pushes; credentials must never enter logs or repository files.
 - Latest local verification: conventions passed 11/11 and the Synology-focused suite passed 7/7; live DSM container inspection was skipped because this runner is Windows. Exact source hashes, staged secret scan, link audit, and `git diff --check` are clean.
 - Do not push to the upstream author's repository.
-- Keep this branch local; do not deploy, merge, release, tag, or retry push while authorization is pending.
+- Branch backup is published to bretbiggs-cloud/homelab-configs. Deployment, merge, release, and tagging remain separate; the dirty default checkout and live Compose paths are preserved.
