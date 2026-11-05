@@ -43,5 +43,6 @@
 - [x] Confirmed the natural 10:30 Eastern monitoring run passed with zero warnings after updating the collector.
 - [x] Exact-file publication review: 25 staged files, no `.env`, zero secret-pattern hits, and all 66 internal links resolved. The generated Python cache was excluded.
 - [x] Scoped local implementation commit `f0c1adc` on `feature/synology-coding-agent-harness`.
+- [x] Rechecked local Synology suite on November 5: 5/5 passed, with live DSM container inspection skipped on Windows. Conventions suite was 8/10; both failures are the four ecosystem alias checks that require symlink materialization, while this Windows SMB checkout has `core.symlinks=false` and represents the Git mode-120000 entries as target-text files. Linux/DSM checkout behavior remains unverified in this run.
 - [ ] Push to the verified user fork is pending GitHub OAuth reauthorization: the current credential lacks `workflow` scope required for the inherited CI workflow. No remote branch was created by the rejected push. The local SSH key fallback was rejected by GitHub after its published host key was verified.
 - [ ] User review remains required before merge, release, tag, or deployment.

@@ -22,5 +22,6 @@ Implementation, backup verification, and final exact-file audit are complete on 
 
 ## Immediate Next Steps
 - User needs to reauthorize the saved GitHub credential with `workflow` scope; then retry pushing the same sanitized branch to the verified fork. The existing local SSH key is not an available alternate credential.
+- Latest local recheck: Synology suite passed 5/5. The conventions suite passed 8/10; its two agent-symlink checks fail in this Windows SMB checkout because `core.symlinks=false` materializes Git mode-120000 entries as target-text files. The Git tree contains the intended symlinks; Linux/DSM materialization was not re-tested here.
 - Do not push to the upstream author's repository.
 - Stop at the mandatory user review gate before merge, release, tag, or deployment to DSM.
