@@ -51,3 +51,9 @@
 - [ ] Commit the scoped portable-entrypoint and monitoring integration changes locally.
 - [x] GitHub branch backup published to bretbiggs-cloud/homelab-configs on 2026-11-05. Remote feature/synology-coding-agent-harness matched reviewed commit 50bb805 before this status update. A command-scoped Git Credential Manager selection used the newly authorized workflow scope; no global helper changes or credentials were published.
 - [ ] User review remains required before merge, release, tag, or deployment.
+
+## Active workspace framework — November 5, 2026
+
+- [x] User authorized activation. Installed full instructions and ten skills at HomeLab and the older repository entrypoint, routing commands and memory to the tested worktree.
+- [x] Verified 40 generated files with zero mismatches; entrypoint instructions fit the default discovery budget. Existing files preserved in a timestamped activation checkpoint.
+- [x] Current chat read canonical instructions, deployment reference, and memory. Framework use does not require a service restart or checkout replacement.

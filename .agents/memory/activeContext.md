@@ -1,6 +1,8 @@
 # Active Context
 
 ## Current Focus
+
+The user explicitly activated the full framework on November 5, 2026. HomeLab/AGENTS.md and NAS Configuration/AGENTS.override.md now load full canonical instructions and route framework work to this worktree. All ten skills are installed as generated discovery copies in both workspace entrypoints. The framework is active despite remaining on its feature branch; live Compose ownership and the dirty default checkout are preserved. Run `python -B .scripts/activate-workspace.py --workspace "\\substation\home\HomeLab" --check` to verify activation, or omit `--check` to refresh generated entrypoints after canonical changes. See `.docs/workspace-activation.md`.
 The repository adaptation is implemented on `feature/synology-coding-agent-harness`, based on standalone harness `origin/main`, while preserving the separate dirty main checkout. Portable Windows/SMB agent copies and the authenticated app-health helper are integrated. Focused tests pass. The latest scheduled monitor run completed in 9 seconds with a remaining Prowlarr `IndexerProxyStatusCheck` error; Radarr/Sonarr are clear. The reviewed branch was published to the user fork on 2026-11-05; remote commit 50bb805 was verified before this status update. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
 
 ## Recent Changes
@@ -24,4 +26,4 @@ The repository adaptation is implemented on `feature/synology-coding-agent-harne
 - GitHub authorization is complete. Git Credential Manager has repo/workflow scope; the default GitHub helper still selects an older token. Use a per-command GitHub helper reset followed by manager for reviewed pushes; credentials must never enter logs or repository files.
 - Latest local verification: conventions passed 11/11 and the Synology-focused suite passed 7/7; live DSM container inspection was skipped because this runner is Windows. Exact source hashes, staged secret scan, link audit, and `git diff --check` are clean.
 - Do not push to the upstream author's repository.
-- Branch backup is published to bretbiggs-cloud/homelab-configs. Deployment, merge, release, and tagging remain separate; the dirty default checkout and live Compose paths are preserved.
+- Branch backup is published to bretbiggs-cloud/homelab-configs. Agent framework activation is complete; service deployment, merge, release, and tagging remain separate; the dirty default checkout and live Compose paths are preserved.
