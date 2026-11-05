@@ -41,4 +41,7 @@
 - [x] Added the Synology test suite and regression fixtures for symlink, path traversal, and SQLite sidecar safeguards; focused suite passed 5/5 locally, with live DSM checks skipped on Windows.
 - [x] Created a private NAS checkpoint on November 5: 1,612 files, five SQLite databases, five isolated restore integrity checks passed. This is same-volume recovery material, not off-device disaster recovery.
 - [x] Confirmed the natural 10:30 Eastern monitoring run passed with zero warnings after updating the collector.
-- [ ] Exact-file secret/link audit, scoped local commit, and sanitized push to the user's fork; user review remains required before merge, release, tag, or deployment.
+- [x] Exact-file publication review: 25 staged files, no `.env`, zero secret-pattern hits, and all 66 internal links resolved. The generated Python cache was excluded.
+- [x] Scoped local implementation commit `f0c1adc` on `feature/synology-coding-agent-harness`.
+- [ ] Push to the verified user fork is pending GitHub OAuth reauthorization: the current credential lacks `workflow` scope required for the inherited CI workflow. No remote branch was created by the rejected push. The local SSH key fallback was rejected by GitHub after its published host key was verified.
+- [ ] User review remains required before merge, release, tag, or deployment.

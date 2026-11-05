@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Focus
-Implementation and validation are complete on `feature/synology-coding-agent-harness`; final exact-file review and sanitized push to the user's fork remain. The branch is based on the standalone harness at `origin/main` and preserves the separate dirty main checkout. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
+Implementation, backup verification, and final exact-file audit are complete on `feature/synology-coding-agent-harness`. Push to the user's fork is pending because GitHub rejected the OAuth credential for lacking the `workflow` scope required by the inherited CI workflow. The existing local SSH key was also rejected by GitHub (`Permission denied (publickey)`) after verifying GitHub's host key. The branch is based on standalone harness `origin/main` and preserves the separate dirty main checkout. Plan: `.agents/artifacts/plan_synology-coding-agent-harness.md`.
 
 ## Recent Changes
 - Modernized agentic harness in alignment with `ParanoydAndroid/coding-agent`.
@@ -21,6 +21,6 @@ Implementation and validation are complete on `feature/synology-coding-agent-har
 - Versioning tier: Semantic patch `3.4.1` paired with CalVer `2026.11.5.1`.
 
 ## Immediate Next Steps
-- Finish internal-link and secret scans over the exact changed files, then stage only the explicit safe allowlist.
-- Commit the implementation locally and push the sanitized feature branch only to the user's verified public fork, never the upstream author's repository.
+- User needs to reauthorize the saved GitHub credential with `workflow` scope; then retry pushing the same sanitized branch to the verified fork. The existing local SSH key is not an available alternate credential.
+- Do not push to the upstream author's repository.
 - Stop at the mandatory user review gate before merge, release, tag, or deployment to DSM.
